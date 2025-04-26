@@ -63,8 +63,8 @@ It’s designed to improve productivity, reduce stress, and provide an organized
 📁 ToDoList-DSA/
 ├── main.c               # Entry point of the program
 ├── scheduler.h          # Scheduling, reminders, due dates, priority logic
-├── taskmanager.h        # Add/edit/delete/complete task functions
-├── searchstats.h        # Search functionality and statistics tracking
+├── task_management.h        # Add/edit/delete/complete task functions
+├── searchstat.h        # Search functionality and statistics tracking
 ├── README.md            # Project documentation
 ```
 ---
@@ -74,8 +74,8 @@ It’s designed to improve productivity, reduce stress, and provide an organized
 ## 💻 How to Run the Code
 
 ### 🧾 Requirements
-- A C compiler (e.g., `gcc`)
-- All header files (`scheduler.h`, `taskmanager.h`, `searchstats.h`) and `main.c` in the same folder
+- A C compiler (`gcc`)
+- All header files (`scheduler.h`, `task_management.h`, `searchstats.h`) and `main.c` in the same folder
 
 ### ⚙️ Compilation
 
@@ -95,9 +95,9 @@ the file should run properly
 
 | Name                        | Student ID    | Role / Responsibilities                    |
 |-----------------------------|---------------|---------------------------------------------|
-| **Kulchaya Paipinij**       | 67070503406   | Search, Data Handling & Statistics (`searchstats.h`) |
+| **Kulchaya Paipinij**       | 67070503406   | Search, Data Handling & Statistics (`searchstat.h`) |
 | **Chayanit Kuntanarumitkul** | 67070503408   | Scheduling, Reminders & Automation (`scheduler.h`) |
-| **Siripitch Chaiyabutra**   | 67070503440   | Task Management & Organization (`taskmanager.h`) |
+| **Siripitch Chaiyabutra**   | 67070503440   | Task Management & Organization (`task_management.h`) |
 
 > Each member was responsible for both development and documentation in their assigned areas.
 
