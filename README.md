@@ -78,10 +78,16 @@ It’s designed to improve productivity, reduce stress, and provide an organized
 - All header files (`scheduler.h`, `taskmanager.h`, `searchstats.h`) and `main.c` in the same folder
 
 ### ⚙️ Compilation
+
+first
 ```bash
-gcc main.c -o todo
-./todo
+gcc main.c task_management.c scheduler.c searchandstat.c fileio.c -o main
 ```
+then 
+```bash
+./main
+```
+the file should run properly
 
 ---
 
