@@ -20,23 +20,23 @@ void search(task* head, const char* keyword){
         printf("'%s' not found.\n", keyword);
 }
 
-void exportTasks(task* head, const char* filename){
-    FILE* file = fopen(filename, "w");
-    if(!file){
-        printf("Can't open %s\n", filename);
-        return;
-    }
-    task* ptr = head;
-    while(ptr){
-        fprintf(file, "%s,%s,%d,%d-%d-%d,%d\n",
-            ptr->name, ptr->description, ptr->priority,
-            ptr->duedate.year, ptr->duedate.month, ptr->duedate.day,
-            ptr->complete);
-        ptr = ptr->next;
-    }
-    fclose(file);
-    printf("Saved to %s\n", filename);
-}
+// void exportTasks(task* head, const char* filename){
+//     FILE* file = fopen(filename, "w");
+//     if(!file){
+//         printf("Can't open %s\n", filename);
+//         return;
+//     }
+//     task* ptr = head;
+//     while(ptr){
+//         fprintf(file, "%s,%s,%d,%d-%d-%d,%d\n",
+//             ptr->name, ptr->description, ptr->priority,
+//             ptr->duedate.year, ptr->duedate.month, ptr->duedate.day,
+//             ptr->complete);
+//         ptr = ptr->next;
+//     }
+//     fclose(file);
+//     printf("Saved to %s\n", filename);
+// }
 
 void stat(task* head){
     int total = 0, done = 0, pending = 0;
