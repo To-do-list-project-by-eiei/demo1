@@ -1,0 +1,21 @@
+CC = gcc
+CFLAGS = -Wall
+OBJS = main.o task_management.o scheduler.o searchandstat.o fileio.o
+
+main: $(OBJS)
+	$(CC) $(CFLAGS) -o main $(OBJS)
+
+main.o: main.c task_management.h scheduler.h searchandstat.h fileio.h
+
+task_management.o: task_management.c task_management.h scheduler.h searchandstat.h
+
+scheduler.o: scheduler.c scheduler.h
+
+searchandstat.o: searchandstat.c searchandstat.h
+
+fileio.o: fileio.c fileio.h
+
+clean:
+	rm -f *.o main
+
+
