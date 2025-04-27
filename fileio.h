@@ -3,7 +3,7 @@
 
 #include "task_management.h"
 
-void exportTasksTxt(task* head, const char *filename);
+void exportTasksTxt(task* head, completedstack* stack, const char* filename);
 void importTasks(tasklist *list, const char *filename);
 
 #endif
