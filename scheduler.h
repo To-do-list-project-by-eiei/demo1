@@ -1,7 +1,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-// Forward declarations only
+//Forward declarations only
 typedef struct task task;
 typedef struct stacknode stacknode;
 
