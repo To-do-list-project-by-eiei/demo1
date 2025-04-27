@@ -3,7 +3,7 @@
 
 #include "task_management.h"
 
-void exportTasks(task* head, const char *filename);
-void importTasks(tasklist *list, const char *filename); // only import uses tasklist
+void exportTasksTxt(task* head, const char *filename);
+void importTasks(tasklist *list, const char *filename);
 
 #endif
