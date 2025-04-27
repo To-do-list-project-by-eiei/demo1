@@ -1,37 +1,60 @@
 #ifndef TASK_MANAGEMENT_H
 #define TASK_MANAGEMENT_H
 
-#include "scheduler.h"
+#include "task_management.h"
+
+#include "scheduler.h" // Only if needed (but not required if scheduler.h already includes this)
+
+// Task status and date already defined in scheduler.h
+// (Be careful to avoid circular includes!)
+
+// typedef enum {
+//     PENDING,
+//     COMPLETED,
+//     OVERDUE
+// } TaskStatus;
+
+// typedef struct {
+//     int day;
+//     int month;
+//     int year;
+// } date;
 
 typedef struct task {
     char name[100];
-    char description[256];
+    char description[300];
     int priority;
-    int complete;
-    date duedate;
+    date duedate;        // ✅ Correct spelling (capital D)
+    TaskStatus status;
+    int due_date_set;    // ✅ Add this field
+    int completed;       // ✅ Add this field
     struct task* next;
 } task;
+
 
 typedef struct {
     task* head;
 } tasklist;
 
-typedef struct stacknode {
-    task task;
+// Assuming task_data in stacknode is a pointer to dynamically allocated task
+struct stacknode {
+    task* task_data;  // Store a POINTER to the task
     struct stacknode* next;
-} stacknode;
+};
+
 
 typedef struct {
     stacknode* top;
 } completedstack;
 
+// Function prototypes
 void add(tasklist* list);
 void view(tasklist* list);
-void edit(tasklist* list, const char* taskname);
-void complete(tasklist* list, completedstack* stack, const char* taskname);
-void undocompleted(tasklist* list, completedstack* stack);
-void deletetask(tasklist* list, const char* taskname);
-void sort(tasklist* list, int criteria);
-void progress(tasklist* list, completedstack* stack);
+void edit(tasklist* list, const char* name);
+void complete(tasklist* list, completedstack* stack, const char* name);
+void undoCompleted(tasklist* list, completedstack* stack);
+void deleteTask(tasklist* list, const char* name);
+void freeTasks(tasklist* list);
+void freeStack(completedstack* stack);
 
-#endif
+#endif // TASK_MANAGEMENT_H
