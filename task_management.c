@@ -39,31 +39,94 @@ void add(tasklist* list) {
 }
 
 void view(tasklist* list) {
+    if (!list->head) {
+        printf("\n=== Task List ===\n");
+        printf("No tasks available.\n");
+        return;
+    }
+    
+    // Create arrays to group tasks by priority
+    taskqueue priorityQueues[3]; // For priorities 1, 2, 3
+    for (int i = 0; i < 3; i++) {
+        initQueue(&priorityQueues[i]);
+    }
+    
+    // First pass: Organize tasks by priority
     task* current = list->head;
-    printf("\n=== Task List ===\n");
     while (current) {
-        printf("Name: %s\n", current->name);
-        printf("Description: %s\n", current->description);
-        printf("Priority: %d\n", current->priority);
-        printf("Status: ");
-        switch (current->status) {
-            case PENDING:
-                printf("Pending\n");
-                break;
-            case COMPLETED:
-                printf("Completed\n");
-                break;
-            case OVERDUE:
-                printf("Overdue\n");
-                break;
+        int priority_index = current->priority - 1;
+        if (priority_index >= 0 && priority_index < 3) {
+            enqueue(&priorityQueues[priority_index], current);
         }
-        if (current->due_date_set) {
-            printf("Due Date: %02d/%02d/%04d\n", current->duedate.day, current->duedate.month, current->duedate.year);
-        } else {
-            printf("Due Date: Not Set\n");
-        }
-        printf("-------------------------\n");
         current = current->next;
+    }
+    
+    printf("\n=== Task List (Sorted by Priority and Due Date) ===\n");
+    
+    // Process each priority queue (1=High, 2=Medium, 3=Low)
+    for (int p = 0; p < 3; p++) {
+        // Create temporary arrays for sorting by date within each priority
+        task* tempList = NULL;
+        
+        // Dequeue all tasks from this priority queue
+        while (!isQueueEmpty(&priorityQueues[p])) {
+            task* t = dequeue(&priorityQueues[p]);
+            
+            // Insert in date-sorted order
+            if (!tempList || !t->due_date_set || 
+                (tempList->due_date_set && compareDates(t->duedate, tempList->duedate) < 0)) {
+                // Insert at beginning
+                t->next = tempList;
+                tempList = t;
+            } else {
+                // Insert in the middle or end
+                task* prev = tempList;
+                task* curr = tempList->next;
+                
+                while (curr && curr->due_date_set && 
+                       (!t->due_date_set || compareDates(curr->duedate, t->duedate) <= 0)) {
+                    prev = curr;
+                    curr = curr->next;
+                }
+                
+                t->next = curr;
+                prev->next = t;
+            }
+        }
+        
+        // Display this priority group and its tasks (sorted by date)
+        switch (p) {
+            case 0: printf("\n--- HIGH PRIORITY TASKS ---\n"); break;
+            case 1: printf("\n--- MEDIUM PRIORITY TASKS ---\n"); break;
+            case 2: printf("\n--- LOW PRIORITY TASKS ---\n"); break;
+        }
+        
+        // Print the sorted tasks
+        current = tempList;
+        while (current) {
+            printf("Name: %s\n", current->name);
+            printf("Description: %s\n", current->description);
+            printf("Status: ");
+            switch (current->status) {
+                case PENDING: printf("Pending\n"); break;
+                case COMPLETED: printf("Completed\n"); break;
+                case OVERDUE: printf("Overdue\n"); break;
+            }
+            if (current->due_date_set) {
+                printf("Due Date: %02d/%02d/%04d\n", 
+                       current->duedate.day, current->duedate.month, current->duedate.year);
+            } else {
+                printf("Due Date: Not Set\n");
+            }
+            printf("-------------------------\n");
+            
+            task* next = current->next;
+            current->next = list->head; // Restore the list structure
+            current = next;
+        }
+        
+        // Reset the temporary list without freeing the task nodes
+        tempList = NULL;
     }
 }
 
@@ -269,3 +332,52 @@ void freeStack(completedstack* stack) {
     }
     stack->top = NULL; // Explicitly set top to NULL
 }
+void initQueue(taskqueue* q) {
+    q->front = q->rear = NULL;
+}
+
+void enqueue(taskqueue* q, task* t) {
+    queuenode* newNode = (queuenode*)malloc(sizeof(queuenode));
+    if (!newNode) {
+        printf("Memory allocation failed for queue node.\n");
+        return;
+    }
+    
+    newNode->task_data = t;
+    newNode->next = NULL;
+    
+    if (q->rear == NULL) {
+        q->front = q->rear = newNode;
+        return;
+    }
+    
+    q->rear->next = newNode;
+    q->rear = newNode;
+}
+
+task* dequeue(taskqueue* q) {
+    if (q->front == NULL)
+        return NULL;
+    
+    queuenode* temp = q->front;
+    task* t = temp->task_data;
+    
+    q->front = q->front->next;
+    
+    if (q->front == NULL)
+        q->rear = NULL;
+    
+    free(temp);
+    return t;
+}
+
+int isQueueEmpty(taskqueue* q) {
+    return q->front == NULL;
+}
+
+void freeQueue(taskqueue* q) {
+    while (!isQueueEmpty(q)) {
+        dequeue(q);
+    }
+}
+
