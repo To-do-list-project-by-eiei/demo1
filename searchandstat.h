@@ -3,8 +3,8 @@
 
 #include "task_management.h"
 
-void searchTasks(task* head, const char* keyword);
+void searchTasks(task* head, completedstack* stack, const char* keyword);
 void showStats(task* head, completedstack* stack);
-void doneToday(task* head);
+void doneToday(tasklist* list, completedstack* stack);
 
 #endif
