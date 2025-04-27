@@ -26,16 +26,16 @@ void setDueDate(task* t, int day, int month, int year) {
     }
 }
 
-void simulateDayChange(task* head, date today) {
-    printf("\n--- Simulating Day Change ---\n");
-    while (head) {
-        if (!head->completed && head->due_date_set && compareDates(today, head->duedate) > 0) {
-            printf("⚠️ Task overdue: %s (was due %02d/%02d/%04d)\n",
-                   head->name, head->duedate.day, head->duedate.month, head->duedate.year);
-        }
-        head = head->next;
-    }
-}
+// void simulateDayChange(task* head, date today) {
+//     printf("\n--- Simulating Day Change ---\n");
+//     while (head) {
+//         if (!head->completed && head->due_date_set && compareDates(today, head->duedate) > 0) {
+//             printf("⚠️ Task overdue: %s (was due %02d/%02d/%04d)\n",
+//                    head->name, head->duedate.day, head->duedate.month, head->duedate.year);
+//         }
+//         head = head->next;
+//     }
+// }
 
 void adjustPriority(task* head, date today) {
     while (head) {
@@ -70,4 +70,102 @@ void clearcompletedtask(stacknode** top_ptr) { // Renamed parameter for clarity
 
     *top_ptr = NULL; // Set the stack's top pointer to NULL via the double pointer
     printf("All completed tasks cleared.\n");
+}
+
+void updateTaskStatuses(task* head, date today) {
+    task* current = head;
+    while (current) {
+        if (!current->completed && current->due_date_set) {
+            // Check if task is overdue
+            if (compareDates(today, current->duedate) > 0) {
+                current->status = OVERDUE;
+            } 
+            // Check if task is due soon (within 2 days)
+            else if (isDateSoon(today, current->duedate, 2)) {
+                current->status = PENDING;  // Still pending but will mark as urgent in display
+            }
+        }
+        current = current->next;
+    }
+}
+
+int isDateSoon(date today, date duedate, int daysThreshold) {
+    // Simple implementation - not accounting for month/year boundaries
+    // For a more accurate implementation, convert both dates to days since epoch
+    
+    // If years are different
+    if (duedate.year > today.year) {
+        if (duedate.month == 1 && today.month == 12) {
+            // Special case: December -> January transition
+            return (31 - today.day + duedate.day) <= daysThreshold;
+        }
+        return 0; // Not soon if more than a month away
+    }
+    
+    // If within same year but different months
+    if (duedate.month > today.month) {
+        if (duedate.month - today.month == 1) {
+            // Tasks due early next month
+            int daysInCurrentMonth;
+            switch (today.month) {
+                case 2: daysInCurrentMonth = 28; break; // Simplified, ignoring leap years
+                case 4: case 6: case 9: case 11: daysInCurrentMonth = 30; break;
+                default: daysInCurrentMonth = 31;
+            }
+            return (daysInCurrentMonth - today.day + duedate.day) <= daysThreshold;
+        }
+        return 0; // Not soon if more than a month away
+    }
+    
+    // Same month, just compare days
+    return (duedate.day - today.day) <= daysThreshold && (duedate.day - today.day) >= 0;
+}
+
+void simulateDayChange(task* head, date* currentDate) {
+    date newDate;
+    printf("\n--- Simulate Day Change ---\n");
+    printf("Current date: %02d/%02d/%04d\n", currentDate->day, currentDate->month, currentDate->year);
+    printf("Enter new date (DD MM YYYY): ");
+    scanf("%d %d %d", &newDate.day, &newDate.month, &newDate.year);
+    getchar(); // Clear input buffer
+    
+    // Validate date (simplified)
+    if (newDate.day < 1 || newDate.day > 31 || newDate.month < 1 || newDate.month > 12 || newDate.year < 2023) {
+        printf("Invalid date. Simulation cancelled.\n");
+        return;
+    }
+    
+    // Update the current date
+    *currentDate = newDate;
+    printf("Date changed to: %02d/%02d/%04d\n", currentDate->day, currentDate->month, currentDate->year);
+    
+    // Update task statuses based on new date
+    updateTaskStatuses(head, newDate);
+    
+    // Now check and notify about overdue tasks
+    int overdueCount = 0;
+    int soonCount = 0;
+    task* current = head;
+    
+    while (current) {
+        if (!current->completed && current->due_date_set) {
+            if (compareDates(newDate, current->duedate) > 0) {
+                printf("⚠️ OVERDUE: \"%s\" was due on %02d/%02d/%04d\n", 
+                       current->name, current->duedate.day, current->duedate.month, current->duedate.year);
+                overdueCount++;
+            } 
+            else if (isDateSoon(newDate, current->duedate, 2)) {
+                printf("⚠️ [!] URGENT: \"%s\" is due soon on %02d/%02d/%04d\n", 
+                       current->name, current->duedate.day, current->duedate.month, current->duedate.year);
+                soonCount++;
+            }
+        }
+        current = current->next;
+    }
+    
+    if (overdueCount == 0 && soonCount == 0) {
+        printf("No overdue or urgent tasks found.\n");
+    } else {
+        printf("\nSummary: %d overdue task(s), %d urgent task(s)\n", overdueCount, soonCount);
+    }
 }
