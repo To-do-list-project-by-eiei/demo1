@@ -126,9 +126,14 @@ void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
     fprintf(file, "Overdue Tasks: %d\n", overdue_count);
     fprintf(file, "Completed Tasks: %d\n", completed_count);
 
-    // ... (rest of your exportTasksTxt function) ...
+    printf("(Program contains %d pending/overdue + %d completed)\n",
+           total_pending_overdue, total_completed);
 
-    printf("(Program contains %d tasks in list + %d completed)\n",
+    fclose(file);
+    printf("Tasks exported to %s\n", filename);
+    printf("Summary: %d pending, %d overdue, %d completed (Total Exported: %d)\n",
+           pending_count, overdue_count, completed_count, total_exported);
+    printf("(Program contains %d active + %d completed tasks)\n",
            total_pending_overdue, total_completed);
 }
 
