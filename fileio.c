@@ -3,30 +3,106 @@
 #include <string.h>
 #include "fileio.h"
 
-void exportTasksTxt(task* head, const char* filename) {
+// Update the exportTasksTxt function in fileio.c to export all tasks organized by priority
+
+void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
     FILE* file = fopen(filename, "w");
     if (!file) {
-        perror("Failed to open file for export"); // Use perror for system errors
+        perror("Failed to open file for export");
         return;
     }
 
-    task* ptr = head;
-    int count = 0;
-    while (ptr) {
-        // Only export tasks that are PENDING (not completed)
-        // Tasks in the 'head' list should generally be pending anyway with the new logic.
-        if (!ptr->completed) {
-             // Format: name,description,priority,day/month/year (Make sure no commas in name/desc!)
-             fprintf(file, "%s,%s,%d,%d/%d/%d\n",
-                     ptr->name, ptr->description, ptr->priority,
-                     ptr->duedate.day, ptr->duedate.month, ptr->duedate.year);
-             count++;
+    // Track how many tasks we export in each category
+    int pending_count = 0, completed_count = 0;
+
+    // Write a header to the file
+    fprintf(file, "===== TO-DO LIST EXPORT =====\n");
+    fprintf(file, "Date Exported: %s\n\n", __DATE__);
+
+    // Export pending tasks by priority
+    fprintf(file, "===== PENDING TASKS =====\n");
+    
+    // Process each priority level (1=High, 2=Medium, 3=Low)
+    for (int priority = 1; priority <= 3; priority++) {
+        switch (priority) {
+            case 1: fprintf(file, "--- HIGH PRIORITY ---\n"); break;
+            case 2: fprintf(file, "--- MEDIUM PRIORITY ---\n"); break;
+            case 3: fprintf(file, "--- LOW PRIORITY ---\n"); break;
         }
-        ptr = ptr->next;
+        
+        // Find tasks with this priority
+        task* ptr = head;
+        int found = 0;
+        
+        while (ptr) {
+            if (ptr->priority == priority) {
+                // Format: name,description,status,day/month/year
+                fprintf(file, "Task: %s\n", ptr->name);
+                fprintf(file, "Description: %s\n", ptr->description);
+                fprintf(file, "Status: %s\n", 
+                        ptr->status == PENDING ? "Pending" : 
+                        ptr->status == OVERDUE ? "Overdue" : "Completed");
+                        
+                if (ptr->due_date_set) {
+                    fprintf(file, "Due Date: %02d/%02d/%04d\n", 
+                            ptr->duedate.day, ptr->duedate.month, ptr->duedate.year);
+                } else {
+                    fprintf(file, "Due Date: Not Set\n");
+                }
+                fprintf(file, "-------------------------\n");
+                pending_count++;
+                found = 1;
+            }
+            ptr = ptr->next;
+        }
+        
+        if (!found) {
+            fprintf(file, "No tasks with this priority.\n");
+            fprintf(file, "-------------------------\n");
+        }
     }
+
+    // Export completed tasks (from stack)
+    fprintf(file, "\n===== COMPLETED TASKS =====\n");
+    
+    stacknode* node = stack->top;
+    if (!node) {
+        fprintf(file, "No completed tasks.\n");
+    } else {
+        while (node) {
+            if (node->task_data) {
+                task* t = node->task_data;
+                
+                fprintf(file, "Task: %s\n", t->name);
+                fprintf(file, "Description: %s\n", t->description);
+                fprintf(file, "Priority: %d\n", t->priority);
+                
+                if (t->due_date_set) {
+                    fprintf(file, "Due Date: %02d/%02d/%04d\n", 
+                            t->duedate.day, t->duedate.month, t->duedate.year);
+                } else {
+                    fprintf(file, "Due Date: Not Set\n");
+                }
+                fprintf(file, "-------------------------\n");
+                completed_count++;
+            }
+            node = node->next;
+        }
+    }
+
+    // Add a summary at the end
+    fprintf(file, "\n===== SUMMARY =====\n");
+    fprintf(file, "Total Tasks: %d\n", pending_count + completed_count);
+    fprintf(file, "Pending Tasks: %d\n", pending_count);
+    fprintf(file, "Completed Tasks: %d\n", completed_count);
+
     fclose(file);
-    printf("%d pending tasks exported to %s\n", count, filename);
+    printf("All tasks (%d pending, %d completed) exported to %s\n", 
+           pending_count, completed_count, filename);
 }
+
+// Update the importTasks function in fileio.c to handle default filenames
+
 void importTasks(tasklist *list, const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
