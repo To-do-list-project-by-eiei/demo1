@@ -1,22 +1,29 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
+// Forward declarations only
+typedef struct task task;
+typedef struct stacknode stacknode;
+
+// Enums and structs
+typedef enum {
+    PENDING,
+    COMPLETED,
+    OVERDUE
+} TaskStatus;
+
 typedef struct {
     int day;
     int month;
     int year;
 } date;
 
-// Forward declaration
-struct task;
-struct stacknode;
+// Function prototypes
+int compareDates(date d1, date d2);
+date getToday();
+void setDueDate(task* t, int day, int month, int year);
+void simulateDayChange(task* head, date today);
+void adjustPriority(task* head, date today);
+void clearcompletedtask(stacknode** completedstack);
 
-int comparedate(date day1, date day2);
-date gettoday();
-void setduedate(struct task* Task, int day, int month, int year);
-void checkreminder(struct task* head);
-void simulatedaychange(struct task* head, date newdate);
-void adjustpriority(struct task* head, date today);
-void clearcompletedtask(struct stacknode** completedstack);
-
-#endif
+#endif // SCHEDULER_H
