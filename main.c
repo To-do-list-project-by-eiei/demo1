@@ -9,9 +9,93 @@
 tasklist tasks = {NULL};
 completedstack doneStack = {NULL};
 
+date currentDate;
+
 void pause() {
     printf("\nPress Enter to continue...");
     getchar();
+}
+
+int checkForLoops(tasklist* list) {
+    if (!list->head) return 0;  // Empty list has no loops
+    
+    // Floyd's Cycle-Finding Algorithm (Tortoise and Hare)
+    task* slow = list->head;
+    task* fast = list->head->next;
+    
+    while (fast && fast->next) {
+        if (slow == fast) {
+            // Loop detected
+            return 1;
+        }
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    
+    return 0;  // No loops found
+}
+
+void debugTaskList() {
+    printf("\n=== Debugging Task List ===\n");
+    
+    // Check if tasks list has loops
+    if (checkForLoops(&tasks)) {
+        printf("ERROR: Loop detected in tasks list!\n");
+    } else {
+        printf("Task list integrity: OK\n");
+    }
+    
+    // Count tasks and check for NULL/invalid data
+    int count = 0;
+    task* current = tasks.head;
+    while (current && count < 1000) {  // Safety limit
+        count++;
+        
+        // Check for invalid data
+        if (current->priority < 1 || current->priority > 3) {
+            printf("WARNING: Task '%s' has invalid priority: %d\n", 
+                   current->name, current->priority);
+        }
+        
+        if (current->due_date_set && 
+            (current->duedate.day < 1 || current->duedate.day > 31 ||
+             current->duedate.month < 1 || current->duedate.month > 12 ||
+             current->duedate.year < 2000 || current->duedate.year > 2100)) {
+            printf("WARNING: Task '%s' has suspicious date: %d/%d/%d\n",
+                   current->name, current->duedate.day, 
+                   current->duedate.month, current->duedate.year);
+        }
+        
+        current = current->next;
+    }
+    
+    if (count == 1000) {
+        printf("WARNING: Possible infinite loop in task list (1000+ items)\n");
+    } else {
+        printf("Task count: %d\n", count);
+    }
+    
+    // Check completed stack
+    count = 0;
+    stacknode* node = doneStack.top;
+    while (node && count < 1000) {  // Safety limit
+        count++;
+        
+        // Check for NULL task data
+        if (!node->task_data) {
+            printf("ERROR: Stack node #%d has NULL task data!\n", count);
+        }
+        
+        node = node->next;
+    }
+    
+    if (count == 1000) {
+        printf("WARNING: Possible infinite loop in completed stack\n");
+    } else {
+        printf("Completed task count: %d\n", count);
+    }
+    
+    printf("=== End Debugging ===\n\n");
 }
 
 void displayMenu() {
@@ -35,6 +119,9 @@ void displayMenu() {
 
 int main() {
     int choice;
+
+    currentDate = getToday();
+
     while (1) {
         displayMenu();
         scanf("%d", &choice);
@@ -46,7 +133,7 @@ int main() {
                 pause();
                 break;
             case 2: 
-                view(&tasks);
+                view(&tasks, currentDate);  // Pass the current date
                 pause();
                 break;
             case 3: {
@@ -90,15 +177,15 @@ int main() {
                 break;
             }
             case 8:
-                showStats(tasks.head, &doneStack);
+                showStats(tasks.head, &doneStack, currentDate);  // Pass the current date
                 pause();
                 break;
-                case 9:
+            case 9:
                 clearcompletedtask(&(doneStack.top)); // <-- Your function from scheduler.h
                 pause();
                 break;
             
-                case 10: {
+            case 10: {
                     char filename[100];
                     printf("Enter filename to import (default: tasks_import.txt): ");
                     fgets(filename, sizeof(filename), stdin);
@@ -133,8 +220,12 @@ int main() {
                 pause();
                 break;
             case 13:
-                simulateDayChange(tasks.head, getToday());
-                adjustPriority(tasks.head, getToday());
+                simulateDayChange(tasks.head, &currentDate);  // Pass address of currentDate
+                pause();
+                break;
+
+            case 99:  // Hidden debug option
+                debugTaskList();
                 pause();
                 break;
             
