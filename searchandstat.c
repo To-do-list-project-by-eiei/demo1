@@ -2,71 +2,52 @@
 #include <string.h>
 #include <time.h>
 #include "searchandstat.h"
+#include "scheduler.h"
 
-void search(task* head, const char* keyword){
-    task* node = head;
+void searchTasks(task* head, const char* keyword) {
     int found = 0;
-    while(node){
-        if(strstr(node->name, keyword) || strstr(node->description, keyword)){
-            printf("Found:\nName:%s\nDesc:%s\nPriority:%d\nDue:%d/%d/%d\nStatus:%s\n",
-                node->name, node->description, node->priority,
-                node->duedate.day, node->duedate.month, node->duedate.year,
-                node->complete ? "Completed" : "Pending");
+    while (head) {
+        if (strstr(head->name, keyword) || strstr(head->description, keyword)) {
+            printf("Found: %s | Priority: %d | Status: %s\n",
+                   head->name, head->priority, head->completed ? "Completed" : "Pending");
             found = 1;
         }
-        node = node->next;
+        head = head->next;
     }
-    if(!found)
-        printf("'%s' not found.\n", keyword);
+    if (!found) printf("No task matching '%s' found.\n", keyword);
 }
 
-// void exportTasks(task* head, const char* filename){
-//     FILE* file = fopen(filename, "w");
-//     if(!file){
-//         printf("Can't open %s\n", filename);
-//         return;
-//     }
-//     task* ptr = head;
-//     while(ptr){
-//         fprintf(file, "%s,%s,%d,%d-%d-%d,%d\n",
-//             ptr->name, ptr->description, ptr->priority,
-//             ptr->duedate.year, ptr->duedate.month, ptr->duedate.day,
-//             ptr->complete);
-//         ptr = ptr->next;
-//     }
-//     fclose(file);
-//     printf("Saved to %s\n", filename);
-// }
-
-void stat(task* head){
-    int total = 0, done = 0, pending = 0;
+void showStats(task* head, completedstack* stack) {
+    int total = 0, completed = 0;
     task* p = head;
-    while(p){
+    while (p) {
         total++;
-        if(p->complete) done++;
-        else pending++;
         p = p->next;
     }
-    printf("Stats:\nTotal: %d  Done: %d  Pending: %d\n", total, done, pending);
+    stacknode* s = stack->top;
+    while (s) {
+        completed++;
+        s = s->next;
+    }
+    printf("\n=== Task Statistics ===\n");
+    printf("Total Tasks: %d\n", total + completed);
+    printf("Completed: %d\n", completed);
+    printf("Pending: %d\n", total);
 }
 
-void doneToday(task* head){
-    time_t now = time(0);
-    struct tm *today = localtime(&now);
-    char todaystr[11];
-    sprintf(todaystr, "%04d-%02d-%02d", today->tm_year+1900, today->tm_mon+1, today->tm_mday);
-
+void doneToday(task* head) {
+    date today = getToday();
     int count = 0;
-    task* cur = head;
-    while(cur){
-        if(cur->complete){ // You could extend this if you track completed date
-            printf("Done Today: Name: %s\n", cur->name);
+    while (head) {
+        if (head->completed && head->due_date_set &&
+            head->duedate.day == today.day &&
+            head->duedate.month == today.month &&
+            head->duedate.year == today.year) {
+            printf("Task completed today: %s\n", head->name);
             count++;
         }
-        cur = cur->next;
+        head = head->next;
     }
-    if(count==0)
-        printf("No task done today.\n");
-    else
-        printf("Total done today: %d\n", count);
+    if (count == 0)
+        printf("No tasks completed today.\n");
 }
