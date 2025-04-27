@@ -4,67 +4,70 @@
 #include "scheduler.h"
 #include "task_management.h"
 
-int comparedate(date day1, date day2) {
-    if (day1.year != day2.year) return day1.year - day2.year;
-    if (day1.month != day2.month) return day1.month - day2.month;
-    return day1.day - day2.day;
+int compareDates(date d1, date d2) {
+    if (d1.year != d2.year) return d1.year - d2.year;
+    if (d1.month != d2.month) return d1.month - d2.month;
+    return d1.day - d2.day;
 }
 
-date gettoday() {
-    time_t now = time(0);
+date getToday() {
+    time_t now = time(NULL);
     struct tm *t = localtime(&now);
-    date today = { t->tm_mday, t->tm_mon + 1, t->tm_year + 1900 };
-    return today;
+    date today = {t->tm_mday, t->tm_mon + 1, t->tm_year + 1900}; // Date structure
+    return today;  // Ensure it returns 'date'
 }
 
-void setduedate(task* Task, int day, int month, int year) {
-    if (Task) {
-        Task->duedate.day = day;
-        Task->duedate.month = month;
-        Task->duedate.year = year;
+void setDueDate(task* t, int day, int month, int year) {
+    if (t) {
+        t->duedate.day = day;
+        t->duedate.month = month;
+        t->duedate.year = year;
+        t->due_date_set = 1;
     }
 }
 
-void checkreminder(task* head) {
-    date today = gettoday();
-    task* curr = head;
-    printf("\n--- Upcoming Due Tasks ---\n");
-    while(curr) {
-        if (!curr->complete && comparedate(today, curr->duedate) > 0) {
-            printf("OVERDUE: %s (Was due on %02d/%02d/%04d)\n",
-                   curr->name, curr->duedate.day, curr->duedate.month, curr->duedate.year);
+void simulateDayChange(task* head, date today) {
+    printf("\n--- Simulating Day Change ---\n");
+    while (head) {
+        if (!head->completed && head->due_date_set && compareDates(today, head->duedate) > 0) {
+            printf("⚠️ Task overdue: %s (was due %02d/%02d/%04d)\n",
+                   head->name, head->duedate.day, head->duedate.month, head->duedate.year);
         }
-        curr = curr->next;
+        head = head->next;
     }
 }
 
-void simulatedaychange(task* head, date newdate) {
-    task* curr = head;
-    printf("\n--- Simulated Day Check ---\n");
-    while(curr) {
-        if (!curr->complete && comparedate(newdate, curr->duedate) > 0) {
-            printf("OVERDUE: %s (Due %02d/%02d/%04d)\n",
-                   curr->name, curr->duedate.day, curr->duedate.month, curr->duedate.year);
+void adjustPriority(task* head, date today) {
+    while (head) {
+        if (!head->completed && head->due_date_set && compareDates(today, head->duedate) > 0 && head->priority != 1) {
+            head->priority = 1;
+            printf("Priority adjusted to HIGH for overdue task: %s\n", head->name);
         }
-        curr = curr->next;
+        head = head->next;
     }
 }
+void clearcompletedtask(stacknode** top_ptr) { // Renamed parameter for clarity
+    stacknode* current = *top_ptr;
+    stacknode* temp;
 
-void adjustpriority(task* head, date today) {
-    task* curr = head;
-    while(curr) {
-        if (!curr->complete && comparedate(today, curr->duedate) > 0 && curr->priority != 1) {
-            curr->priority = 1; // Overdue tasks become high priority
+    if (current == NULL) {
+        printf("No completed tasks to clear.\n");
+        return;
+    }
+
+    printf("Clearing all completed tasks...\n");
+    while (current != NULL) {
+        temp = current;
+        current = current->next;
+
+        // Free the dynamically allocated task data FIRST
+        if (temp->task_data) { // Good practice to check
+            free(temp->task_data);
         }
-        curr = curr->next;
-    }
-}
-
-void clearcompletedtask(stacknode** completedstack) {
-    while(*completedstack) {
-        stacknode* temp = *completedstack;
-        *completedstack = (*completedstack)->next;
+        // THEN free the stack node itself
         free(temp);
     }
+
+    *top_ptr = NULL; // Set the stack's top pointer to NULL via the double pointer
     printf("All completed tasks cleared.\n");
 }
