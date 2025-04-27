@@ -27,10 +27,11 @@ void displayMenu() {
     printf("9. Clear All Completed Tasks\n");
     printf("10. Import Tasks\n");
     printf("11. Export Tasks\n");
+    printf("12. Daily Completed Tasks\n");
+    printf("13. Simulate Day Change\n");
     printf("0. Exit\n");
     printf("Select an option: ");
 }
-
 
 int main() {
     int choice;
@@ -84,7 +85,7 @@ int main() {
                 printf("Enter keyword to search: ");
                 fgets(keyword, sizeof(keyword), stdin);
                 keyword[strcspn(keyword, "\n")] = 0;
-                searchTasks(tasks.head, keyword);
+                searchTasks(tasks.head, &doneStack, keyword);
                 pause();
                 break;
             }
@@ -97,13 +98,43 @@ int main() {
                 pause();
                 break;
             
-            case 10:
-                importTasks(&tasks, "tasks_import.txt"); // <-- new import function
+                case 10: {
+                    char filename[100];
+                    printf("Enter filename to import (default: tasks_import.txt): ");
+                    fgets(filename, sizeof(filename), stdin);
+                    filename[strcspn(filename, "\n")] = 0;
+                    
+                    if (strlen(filename) == 0) {
+                        strcpy(filename, "tasks_import.txt");
+                    }
+                    
+                    importTasks(&tasks, filename);
+                    pause();
+                    break;
+                }
+
+            case 11: {
+                    char filename[100];
+                    printf("Enter filename for export (default: tasks_export.txt): ");
+                    fgets(filename, sizeof(filename), stdin);
+                    filename[strcspn(filename, "\n")] = 0;
+                    
+                    if (strlen(filename) == 0) {
+                        strcpy(filename, "tasks_export.txt");
+                    }
+                    
+                    exportTasksTxt(tasks.head, &doneStack, filename);
+                    pause();
+                    break;
+                }
+
+            case 12:
+                doneToday(&tasks, &doneStack);
                 pause();
                 break;
-            
-            case 11:
-                exportTasksTxt(tasks.head, "tasks_export.txt"); // <-- export to .txt
+            case 13:
+                simulateDayChange(tasks.head, getToday());
+                adjustPriority(tasks.head, getToday());
                 pause();
                 break;
             
