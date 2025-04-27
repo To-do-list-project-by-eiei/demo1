@@ -1,7 +1,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-//Forward declarations only
+// Forward declarations only
 typedef struct task task;
 typedef struct stacknode stacknode;
 
@@ -22,8 +22,11 @@ typedef struct {
 int compareDates(date d1, date d2);
 date getToday();
 void setDueDate(task* t, int day, int month, int year);
-void simulateDayChange(task* head, date today);
+void simulateDayChange(task* head, date* currentDate);
 void adjustPriority(task* head, date today);
 void clearcompletedtask(stacknode** completedstack);
+void updateTaskStatuses(task* head, date today);
+int isDateSoon(date today, date duedate, int daysThreshold);
+
 
 #endif // SCHEDULER_H
