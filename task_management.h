@@ -31,21 +31,20 @@ typedef struct task {
     struct task* next;
 } task;
 
-
 typedef struct {
     task* head;
 } tasklist;
 
-// Assuming task_data in stacknode is a pointer to dynamically allocated task
-struct stacknode {
-    task* task_data;  // Store a POINTER to the task
+typedef struct stacknode {
+    task* task_data;  // pointer to the task
     struct stacknode* next;
-};
-
+} stacknode;
 
 typedef struct {
     stacknode* top;
 } completedstack;
+
+
 
 typedef struct queuenode {
     task* task_data;
@@ -66,7 +65,7 @@ void freeQueue(taskqueue* q);
 
 // Function prototypes
 void add(tasklist* list);
-void view(tasklist* list);
+void view(tasklist* list, date today);
 void edit(tasklist* list, const char* name);
 void complete(tasklist* list, completedstack* stack, const char* name);
 void undoCompleted(tasklist* list, completedstack* stack);
