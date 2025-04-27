@@ -6,12 +6,15 @@
 #include "scheduler.h"
 #include "fileio.h"
 
-
-
 tasklist tasks = {NULL};
 completedstack doneStack = {NULL};
 
-void displayMenu(){
+void pause() {
+    printf("\nPress Enter to continue...");
+    getchar();
+}
+
+void displayMenu() {
     printf("\n=== TO-DO LIST MENU ===\n");
     printf("1. Add Task\n");
     printf("2. View Tasks\n");
@@ -20,31 +23,38 @@ void displayMenu(){
     printf("5. Undo Last Completed Task\n");
     printf("6. Delete Task\n");
     printf("7. Search Tasks\n");
-    printf("8. View Statistics\n");
-    printf("9. Set Due Date\n");
-    printf("10. Simulate Day Change\n");
+    printf("8. View Statistics (Progress)\n");
+    printf("9. Clear All Completed Tasks\n");
+    printf("10. Import Tasks\n");
     printf("11. Export Tasks\n");
-    printf("12. Clear Completed Tasks\n");
     printf("0. Exit\n");
     printf("Select an option: ");
 }
 
-int main(){
+
+int main() {
     int choice;
-    while(1){
+    while (1) {
         displayMenu();
         scanf("%d", &choice);
-        getchar();
+        getchar(); // flush newline
 
-        switch(choice){
-            case 1: add(&tasks); break;
-            case 2: view(&tasks); break;
+        switch (choice) {
+            case 1: 
+                add(&tasks);
+                pause();
+                break;
+            case 2: 
+                view(&tasks);
+                pause();
+                break;
             case 3: {
                 char name[100];
                 printf("Enter task name to edit: ");
                 fgets(name, sizeof(name), stdin);
                 name[strcspn(name, "\n")] = 0;
                 edit(&tasks, name);
+                pause();
                 break;
             }
             case 4: {
@@ -53,15 +63,20 @@ int main(){
                 fgets(name, sizeof(name), stdin);
                 name[strcspn(name, "\n")] = 0;
                 complete(&tasks, &doneStack, name);
+                pause();
                 break;
             }
-            case 5: undocompleted(&tasks, &doneStack); break;
+            case 5:
+                undoCompleted(&tasks, &doneStack);
+                pause();
+                break;
             case 6: {
                 char name[100];
                 printf("Enter task name to delete: ");
                 fgets(name, sizeof(name), stdin);
                 name[strcspn(name, "\n")] = 0;
-                deletetask(&tasks, name);
+                deleteTask(&tasks, name);
+                pause();
                 break;
             }
             case 7: {
@@ -69,49 +84,37 @@ int main(){
                 printf("Enter keyword to search: ");
                 fgets(keyword, sizeof(keyword), stdin);
                 keyword[strcspn(keyword, "\n")] = 0;
-                search(tasks.head, keyword);
+                searchTasks(tasks.head, keyword);
+                pause();
                 break;
             }
-            case 8: progress(&tasks, &doneStack); break;
-            case 9: {
-                char name[100];
-                int day, month, year;
-                printf("Enter task name to set due date: ");
-                fgets(name, sizeof(name), stdin);
-                name[strcspn(name, "\n")] = 0;
-
-                printf("Enter due date (DD MM YYYY): ");
-                scanf("%d%d%d", &day, &month, &year);
-
-                task* current = tasks.head;
-                while(current){
-                    if(strcmp(current->name, name) == 0){
-                        setduedate(current, day, month, year);
-                        printf("Due date set!\n");
-                        break;
-                    }
-                    current = current->next;
-                }
+            case 8:
+                showStats(tasks.head, &doneStack);
+                pause();
                 break;
-            }
-            case 10: {
-                date simdate;
-                printf("Enter simulated date (DD MM YYYY): ");
-                scanf("%d%d%d", &simdate.day, &simdate.month, &simdate.year);
-                simulatedaychange(tasks.head, simdate);
+                case 9:
+                clearcompletedtask(&(doneStack.top)); // <-- Your function from scheduler.h
+                pause();
                 break;
-            }
+            
+            case 10:
+                importTasks(&tasks, "tasks_import.txt"); // <-- new import function
+                pause();
+                break;
+            
             case 11:
-                exportTasks(tasks.head, "tasks_backup.csv");
+                exportTasksTxt(tasks.head, "tasks_export.txt"); // <-- export to .txt
+                pause();
                 break;
-            case 12:
-                clearcompletedtask(&(doneStack.top));
-                break;
+            
             case 0:
-                printf("Goodbye!\n");
+                printf("Exiting...\n");
+                freeTasks(&tasks);
+                freeStack(&doneStack);
                 exit(0);
             default:
                 printf("Invalid option. Try again.\n");
+                pause();
         }
-    }
+    }        
 }
