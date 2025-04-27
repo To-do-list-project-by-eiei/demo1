@@ -38,9 +38,11 @@ void add(tasklist* list) {
     printf("Task added successfully!\n");
 }
 
-void view(tasklist* list) {
-    if (!list->head) {
-        printf("\n=== Task List ===\n");
+void view(tasklist* list, date today) {
+    task* current = list->head;
+    printf("\n=== Task List ===\n");
+    
+    if (!current) {
         printf("No tasks available.\n");
         return;
     }
@@ -51,8 +53,10 @@ void view(tasklist* list) {
         initQueue(&priorityQueues[i]);
     }
     
-    // First pass: Organize tasks by priority
-    task* current = list->head;
+    // First, update statuses based on current date
+    updateTaskStatuses(current, today);
+    
+    // Organize tasks by priority
     while (current) {
         int priority_index = current->priority - 1;
         if (priority_index >= 0 && priority_index < 3) {
@@ -61,9 +65,7 @@ void view(tasklist* list) {
         current = current->next;
     }
     
-    printf("\n=== Task List (Sorted by Priority and Due Date) ===\n");
-    
-    // Process each priority queue (1=High, 2=Medium, 3=Low)
+    // Display tasks by priority and due date
     for (int p = 0; p < 3; p++) {
         // Create temporary arrays for sorting by date within each priority
         task* tempList = NULL;
@@ -102,27 +104,41 @@ void view(tasklist* list) {
         }
         
         // Print the sorted tasks
-        current = tempList;
-        while (current) {
-            printf("Name: %s\n", current->name);
-            printf("Description: %s\n", current->description);
-            printf("Status: ");
-            switch (current->status) {
-                case PENDING: printf("Pending\n"); break;
-                case COMPLETED: printf("Completed\n"); break;
-                case OVERDUE: printf("Overdue\n"); break;
-            }
-            if (current->due_date_set) {
-                printf("Due Date: %02d/%02d/%04d\n", 
-                       current->duedate.day, current->duedate.month, current->duedate.year);
-            } else {
-                printf("Due Date: Not Set\n");
-            }
+        // Print the sorted tasks
+current = tempList;
+int taskCount = 0;
+task* next_temp;
+while (current) {
+    printf("Name: %s", current->name);
+    
+    // Show urgent tag for tasks due soon
+    if (!current->completed && current->due_date_set && isDateSoon(today, current->duedate, 2)) {
+        printf(" [!]URGENT");
+    }
+    printf("\n");
+    
+    printf("Description: %s\n", current->description);
+    printf("Status: ");
+    switch (current->status) {
+        case PENDING: printf("Pending\n"); break;
+        case COMPLETED: printf("Completed\n"); break;
+        case OVERDUE: printf("OVERDUE\n"); break;
+    }
+    if (current->due_date_set) {
+        printf("Due Date: %02d/%02d/%04d\n", 
+               current->duedate.day, current->duedate.month, current->duedate.year);
+    } else {
+        printf("Due Date: Not Set\n");
+    }
+    printf("-------------------------\n");
+    
+    next_temp = current->next;
+    current = next_temp;
+    taskCount++;
+}
+        if (taskCount == 0) {
+            printf("No tasks with this priority.\n");
             printf("-------------------------\n");
-            
-            task* next = current->next;
-            current->next = list->head; // Restore the list structure
-            current = next;
         }
         
         // Reset the temporary list without freeing the task nodes
@@ -182,44 +198,55 @@ void edit(tasklist* list, const char* taskname) {
 
 
 void complete(tasklist* list, completedstack* stack, const char* taskname) {
-    task* current = list->head, *prev = NULL;
+    if (!list || !stack || !taskname) {
+        printf("Error: Invalid parameters for complete function.\n");
+        return;
+    }
+    
+    task* current = list->head;
+    task* prev = NULL;
+    
+    // Find the task to complete
     while (current && strcmp(current->name, taskname) != 0) {
         prev = current;
         current = current->next;
     }
+    
     if (!current) {
-        printf("Task not found.\n");
+        printf("Task not found: %s\n", taskname);
         return;
     }
-
-    // Mark the task as completed BEFORE moving it
-    current->status = COMPLETED;
-    current->completed = 1;
-
-    // Remove from list
-    if (prev) prev->next = current->next;
-    else list->head = current->next;
-
-    // Allocate stack node
+    
+    // Debug info
+    printf("Found task: %s (Priority: %d)\n", current->name, current->priority);
+    
+    // Allocate stack node first to check for memory issues
     stacknode* node = (stacknode*)malloc(sizeof(stacknode));
     if (!node) {
-        printf("Memory allocation failed for stack node.\n");
-        // CRITICAL: Should put the task back in the list or handle error better!
-        // For simplicity now, just return, but the task is lost from view.
-        // A robust solution would re-insert 'current' into 'list'.
-        current->status = PENDING; // Revert status if stack fails
-        current->completed = 0;
-         if (prev) prev->next = current; else list->head = current; // Put back
+        printf("Memory allocation failed for stack node. Task remains in list.\n");
         return;
     }
-
-    // Push POINTER onto stack
-    node->task_data = current; // Store the pointer to the original task node
+    
+    // Mark the task as completed
+    current->status = COMPLETED;
+    current->completed = 1;
+    
+    // Remove from list first
+    if (prev) {
+        prev->next = current->next;
+    } else {
+        list->head = current->next;
+    }
+    
+    // Clear the next pointer to avoid circular references
+    current->next = NULL;
+    
+    // Push onto stack
+    node->task_data = current;
     node->next = stack->top;
     stack->top = node;
-
-    // DO NOT free(current); The stack now owns this task memory.
-    printf("Task marked as completed and moved to stack!\n");
+    
+    printf("Task '%s' marked as completed and moved to stack!\n", current->name);
 }
 
 void undoCompleted(tasklist* list, completedstack* stack) {
