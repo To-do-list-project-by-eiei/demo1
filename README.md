@@ -91,6 +91,33 @@ the file should run properly
 
 ---
 
+###  Sample input
+
+1.
+```bash
+CompProg, Linked List practice - Practice linked list operations for homework, 1, 30/04/2025
+```
+2.
+```bash
+CalII, Integration review - Study integration techniques for upcoming exam, 1, 02/05/2025
+```
+more sample input on the file sample_import.txt
+
+## expected output
+```bash
+Name: CompProg [!]URGENT
+Description:  Debugging session - Fix errors in C program homework
+Status: Pending
+Due Date: 30/04/2025
+```
+```bash
+Name: CalII
+Description:  Integration review - Study integration techniques for upcoming exam
+Status: Pending
+Due Date: 02/05/2025
+```
+
+
 ## 👨‍👩‍👧‍👦 Group Members
 
 | Name                        | Student ID    | Role / Responsibilities                    |
