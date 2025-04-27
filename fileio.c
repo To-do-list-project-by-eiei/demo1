@@ -3,61 +3,77 @@
 #include <string.h>
 #include "fileio.h"
 
-// Export tasks to a text file
-void exportTasks(task* head, const char *filename) {
-    FILE *fp = fopen(filename, "w");
-    if (!fp) {
-        printf("Failed to open file for writing.\n");
+void exportTasksTxt(task* head, const char* filename) {
+    FILE* file = fopen(filename, "w");
+    if (!file) {
+        perror("Failed to open file for export"); // Use perror for system errors
         return;
     }
 
-    task *current = head;
-    while (current) {
-        fprintf(fp, "%s|%s|%d|%d|%d-%d-%d\n",
-            current->name,
-            current->description,
-            current->priority,
-            current->complete,
-            current->duedate.day,
-            current->duedate.month,
-            current->duedate.year);
-        current = current->next;
+    task* ptr = head;
+    int count = 0;
+    while (ptr) {
+        // Only export tasks that are PENDING (not completed)
+        // Tasks in the 'head' list should generally be pending anyway with the new logic.
+        if (!ptr->completed) {
+             // Format: name,description,priority,day/month/year (Make sure no commas in name/desc!)
+             fprintf(file, "%s,%s,%d,%d/%d/%d\n",
+                     ptr->name, ptr->description, ptr->priority,
+                     ptr->duedate.day, ptr->duedate.month, ptr->duedate.year);
+             count++;
+        }
+        ptr = ptr->next;
     }
-
-    fclose(fp);
-    printf("Tasks exported to %s successfully.\n", filename);
+    fclose(file);
+    printf("%d pending tasks exported to %s\n", count, filename);
 }
-
-// Import tasks from a text file
-void importTasks(tasklist *list, const char *filename) {
-    FILE *fp = fopen(filename, "r");
-    if (!fp) {
-        printf("Failed to open file for reading.\n");
+void importTasks(tasklist *list, const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        perror("Failed to open file for import");
         return;
     }
 
-    char line[512];
-    while (fgets(line, sizeof(line), fp)) {
-        task *newtask = (task *)malloc(sizeof(task));
-        if (newtask == NULL) {
-            printf("Memory allocation failed.\n");
-            fclose(fp);
-            return;
+    // Use generous buffer sizes, matching task struct fields
+    char name[100];
+    char desc[300];
+    int priority, day, month, year;
+    int imported_count = 0;
+
+    // Format: name,description,priority,day/month/year
+    // Use field widths in fscanf for safety against buffer overflows
+    while (fscanf(file, " %99[^,],%299[^,],%d,%d/%d/%d\n", // Note leading space to skip whitespace
+                   name, desc, &priority, &day, &month, &year) == 6) { // Expect 6 fields
+
+        task* newtask = (task*)malloc(sizeof(task));
+        if (!newtask) {
+            printf("Memory allocation failed during import. Aborting rest.\n");
+            break; // Stop importing if memory fails
         }
 
-        sscanf(line, " %[^|]|%[^|]|%d|%d|%d-%d-%d",
-            newtask->name,
-            newtask->description,
-            &newtask->priority,
-            &newtask->complete,
-            &newtask->duedate.day,
-            &newtask->duedate.month,
-            &newtask->duedate.year);
+        strcpy(newtask->name, name);
+        strcpy(newtask->description, desc);
+        newtask->priority = priority;
+        newtask->duedate.day = day;
+        newtask->duedate.month = month;
+        newtask->duedate.year = year;
 
+        // Initialize other fields correctly for an imported (pending) task
+        newtask->due_date_set = 1; // Assume date from file is valid
+        newtask->completed = 0;
+        newtask->status = PENDING; // Imported tasks are pending
+
+        // Add to the beginning of the list
         newtask->next = list->head;
         list->head = newtask;
+        imported_count++;
     }
 
-    fclose(fp);
-    printf("Tasks imported from %s successfully.\n", filename);
+    // Check for fscanf errors other than EOF
+    if (ferror(file)) {
+       perror("Error reading import file");
+    }
+
+    fclose(file);
+    printf("%d tasks imported from %s\n", imported_count, filename);
 }
