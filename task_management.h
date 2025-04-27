@@ -47,6 +47,23 @@ typedef struct {
     stacknode* top;
 } completedstack;
 
+typedef struct queuenode {
+    task* task_data;
+    struct queuenode* next;
+} queuenode;
+
+typedef struct {
+    queuenode* front;
+    queuenode* rear;
+} taskqueue;
+
+void initQueue(taskqueue* q);
+void enqueue(taskqueue* q, task* t);
+task* dequeue(taskqueue* q);
+int isQueueEmpty(taskqueue* q);
+void freeQueue(taskqueue* q);
+
+
 // Function prototypes
 void add(tasklist* list);
 void view(tasklist* list);
