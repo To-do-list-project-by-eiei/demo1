@@ -89,6 +89,64 @@ void updateTaskStatuses(task* head, date today) {
     }
 }
 
+// Improved auto-priority adjustment based on due dates
+void autoPriorityAdjust(task* head, date today) {
+    task* current = head;
+    while (current) {
+        if (!current->completed && current->due_date_set) {
+            // Calculate days until due
+            int daysUntilDue = getDaysBetween(today, current->duedate);
+            
+            // Auto-adjust priority based on due date
+            if (daysUntilDue < 0) {
+                // Overdue tasks are always high priority
+                if (current->priority != 1) {
+                    current->priority = 1;
+                    printf("Priority for '%s' auto-adjusted to HIGH (overdue)\n", current->name);
+                }
+            }
+            else if (daysUntilDue <= 2) {
+                // Tasks due within 2 days are at least medium priority
+                if (current->priority > 2) {
+                    current->priority = 2;
+                    printf("Priority for '%s' auto-adjusted to MEDIUM (due soon)\n", current->name);
+                }
+            }
+            else if (daysUntilDue <= 1) {
+                // Tasks due tomorrow are high priority
+                if (current->priority != 1) {
+                    current->priority = 1;
+                    printf("Priority for '%s' auto-adjusted to HIGH (due tomorrow)\n", current->name);
+                }
+            }
+        }
+        current = current->next;
+    }
+}
+
+int getDaysBetween(date d1, date d2) {
+    // This is a simplified calculation and doesn't account for all edge cases
+    // For a more accurate calculation, convert dates to absolute days or use a library
+    
+    // Approximate days in each month (ignoring leap years)
+    const int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    
+    // Convert dates to days since year 0 (approximate)
+    int days1 = d1.year * 365 + d1.day;
+    int days2 = d2.year * 365 + d2.day;
+    
+    // Add days for months
+    for (int i = 1; i < d1.month; i++) days1 += daysInMonth[i];
+    for (int i = 1; i < d2.month; i++) days2 += daysInMonth[i];
+    
+    // Add leap years (approximate)
+    days1 += d1.year / 4;
+    days2 += d2.year / 4;
+    
+    return days2 - days1;
+}
+
+
 int isDateSoon(date today, date duedate, int daysThreshold) {
     // Simple implementation - not accounting for month/year boundaries
     // For a more accurate implementation, convert both dates to days since epoch
@@ -129,7 +187,7 @@ void simulateDayChange(task* head, date* currentDate) {
     scanf("%d %d %d", &newDate.day, &newDate.month, &newDate.year);
     getchar(); // Clear input buffer
     
-    // Validate date (simplified)
+    // Validate date
     if (newDate.day < 1 || newDate.day > 31 || newDate.month < 1 || newDate.month > 12 || newDate.year < 2023) {
         printf("Invalid date. Simulation cancelled.\n");
         return;
@@ -142,7 +200,10 @@ void simulateDayChange(task* head, date* currentDate) {
     // Update task statuses based on new date
     updateTaskStatuses(head, newDate);
     
-    // Now check and notify about overdue tasks
+    // Auto-adjust priorities based on due dates
+    autoPriorityAdjust(head, newDate);
+    
+    // Check and notify about overdue tasks
     int overdueCount = 0;
     int soonCount = 0;
     task* current = head;
