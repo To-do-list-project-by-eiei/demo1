@@ -65,6 +65,7 @@ void freeQueue(taskqueue* q);
 
 // Function prototypes
 void add(tasklist* list);
+int isTaskNameDuplicate(tasklist* list, const char* name);
 void view(tasklist* list, date today);
 void edit(tasklist* list, const char* name);
 void complete(tasklist* list, completedstack* stack, const char* name);
