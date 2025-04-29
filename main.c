@@ -169,9 +169,9 @@ int main() {
             }
             case 7: {
                 char keyword[100];
-                printf("Enter keyword to search: ");
-                fgets(keyword, sizeof(keyword), stdin);
-                keyword[strcspn(keyword, "\n")] = 0;
+                // printf("Enter keyword to search: ");
+                // fgets(keyword, sizeof(keyword), stdin);
+                // keyword[strcspn(keyword, "\n")] = 0;
                 searchTasks(tasks.head, &doneStack, keyword);
                 pause();
                 break;
