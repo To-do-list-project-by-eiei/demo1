@@ -6,49 +6,247 @@
 
 void searchTasks(task* head, completedstack* stack, const char* keyword) {
     int found = 0;
+    int search_option;
+    int min_priority = 0, max_priority = 0;
+    date start_date = {0}, end_date = {0};
     
-    printf("\n=== Search Results for '%s' ===\n", keyword);
+    printf("\n=== Task Search ===\n");
+    printf("Search by:\n");
+    printf("1. Name\n");
+    printf("2. Description\n");
+    printf("3. Priority Range\n");
+    printf("4. Status (Pending/Completed/Overdue)\n");
+    printf("5. Due Date Range\n");
+    printf("Enter your choice (1-5): ");
+    scanf("%d", &search_option);
+    getchar(); // Clear newline
     
-    // Search pending tasks
-    printf("--- Pending Tasks ---\n");
-    task* current = head;
-    while (current) {
-        if (strstr(current->name, keyword) || strstr(current->description, keyword)) {
-            printf("Name: %s\n", current->name);
-            printf("Description: %s\n", current->description);
-            printf("Priority: %d\n", current->priority);
-            if (current->due_date_set) {
-                printf("Due Date: %02d/%02d/%04d\n", 
-                       current->duedate.day, current->duedate.month, current->duedate.year);
+    // Process search criteria based on option
+    switch(search_option) {
+        case 1: // Name
+        case 2: // Description
+            if (strlen(keyword) == 0) {
+                printf("Enter search keyword: ");
+                char new_keyword[100];
+                fgets(new_keyword, sizeof(new_keyword), stdin);
+                new_keyword[strcspn(new_keyword, "\n")] = 0;
+                
+                printf("\n=== Search Results for '%s' ===\n", new_keyword);
+                
+                // Search pending tasks
+                printf("--- Pending Tasks ---\n");
+                task* current = head;
+                while (current) {
+                    if ((search_option == 1 && strstr(current->name, new_keyword)) ||
+                        (search_option == 2 && strstr(current->description, new_keyword))) {
+                        printTaskInfo(current);
+                        found = 1;
+                    }
+                    current = current->next;
+                }
+                
+                // Search completed tasks
+                printf("--- Completed Tasks ---\n");
+                stacknode* node = stack->top;
+                while (node) {
+                    task* t = node->task_data;
+                    if ((search_option == 1 && strstr(t->name, new_keyword)) ||
+                        (search_option == 2 && strstr(t->description, new_keyword))) {
+                        printTaskInfo(t);
+                        found = 1;
+                    }
+                    node = node->next;
+                }
+            } else {
+                // If keyword was already provided
+                printf("\n=== Search Results for '%s' ===\n", keyword);
+                
+                // Search pending tasks
+                printf("--- Pending Tasks ---\n");
+                task* current = head;
+                while (current) {
+                    if ((search_option == 1 && strstr(current->name, keyword)) ||
+                        (search_option == 2 && strstr(current->description, keyword))) {
+                        printTaskInfo(current);
+                        found = 1;
+                    }
+                    current = current->next;
+                }
+                
+                // Search completed tasks
+                printf("--- Completed Tasks ---\n");
+                stacknode* node = stack->top;
+                while (node) {
+                    task* t = node->task_data;
+                    if ((search_option == 1 && strstr(t->name, keyword)) ||
+                        (search_option == 2 && strstr(t->description, keyword))) {
+                        printTaskInfo(t);
+                        found = 1;
+                    }
+                    node = node->next;
+                }
             }
-            printf("-------------------------\n");
-            found = 1;
-        }
-        current = current->next;
-    }
-    
-    // Search completed tasks
-    printf("--- Completed Tasks ---\n");
-    stacknode* node = stack->top;
-    while (node) {
-        task* t = node->task_data;
-        if (strstr(t->name, keyword) || strstr(t->description, keyword)) {
-            printf("Name: %s\n", t->name);
-            printf("Description: %s\n", t->description);
-            printf("Priority: %d\n", t->priority);
-            if (t->due_date_set) {
-                printf("Due Date: %02d/%02d/%04d\n", 
-                       t->duedate.day, t->duedate.month, t->duedate.year);
+            break;
+            
+        case 3: // Priority Range
+            printf("Enter minimum priority (1-High, 3-Low): ");
+            scanf("%d", &min_priority);
+            printf("Enter maximum priority (1-High, 3-Low): ");
+            scanf("%d", &max_priority);
+            getchar(); // Clear newline
+            
+            if (min_priority > max_priority) {
+                // Swap if min > max
+                int temp = min_priority;
+                min_priority = max_priority;
+                max_priority = temp;
             }
-            printf("-------------------------\n");
-            found = 1;
-        }
-        node = node->next;
+            
+            printf("\n=== Search Results for Priority %d to %d ===\n", min_priority, max_priority);
+            
+            // Search pending tasks
+            printf("--- Pending Tasks ---\n");
+            task* current = head;
+            while (current) {
+                if (current->priority >= min_priority && current->priority <= max_priority) {
+                    printTaskInfo(current);
+                    found = 1;
+                }
+                current = current->next;
+            }
+            
+            // Search completed tasks
+            printf("--- Completed Tasks ---\n");
+            stacknode* node = stack->top;
+            while (node) {
+                task* t = node->task_data;
+                if (t->priority >= min_priority && t->priority <= max_priority) {
+                    printTaskInfo(t);
+                    found = 1;
+                }
+                node = node->next;
+            }
+            break;
+            
+        case 4: // Status
+            printf("Search by status:\n");
+            printf("1. Pending\n");
+            printf("2. Completed\n");
+            printf("3. Overdue\n");
+            printf("Enter choice: ");
+            int status_choice;
+            scanf("%d", &status_choice);
+            getchar(); // Clear newline
+            
+            TaskStatus search_status;
+            switch(status_choice) {
+                case 1: search_status = PENDING; break;
+                case 2: search_status = COMPLETED; break;
+                case 3: search_status = OVERDUE; break;
+                default: 
+                    printf("Invalid status choice.\n");
+                    return;
+            }
+            
+            printf("\n=== Search Results for Status: %s ===\n", 
+                  (search_status == PENDING) ? "Pending" : 
+                  (search_status == COMPLETED) ? "Completed" : "Overdue");
+            
+            // For completed tasks, we primarily search the stack
+            if (search_status == COMPLETED) {
+                printf("--- Completed Tasks ---\n");
+                stacknode* node = stack->top;
+                while (node) {
+                    task* t = node->task_data;
+                    if (t->status == search_status) {
+                        printTaskInfo(t);
+                        found = 1;
+                    }
+                    node = node->next;
+                }
+            } else {
+                // For PENDING/OVERDUE we search the main list
+                printf("--- Tasks ---\n");
+                task* current = head;
+                while (current) {
+                    if (current->status == search_status) {
+                        printTaskInfo(current);
+                        found = 1;
+                    }
+                    current = current->next;
+                }
+            }
+            break;
+            
+        case 5: // Due Date Range
+            printf("Enter start date (DD MM YYYY): ");
+            scanf("%d %d %d", &start_date.day, &start_date.month, &start_date.year);
+            printf("Enter end date (DD MM YYYY): ");
+            scanf("%d %d %d", &end_date.day, &end_date.month, &end_date.year);
+            getchar(); // Clear newline
+            
+            printf("\n=== Search Results for Due Date from %02d/%02d/%04d to %02d/%02d/%04d ===\n",
+                   start_date.day, start_date.month, start_date.year,
+                   end_date.day, end_date.month, end_date.year);
+            
+            // Search pending tasks
+            printf("--- Pending Tasks ---\n");
+            current = head;
+            while (current) {
+                if (current->due_date_set) {
+                    // Check if task due date is within range
+                    if (compareDates(current->duedate, start_date) >= 0 && 
+                        compareDates(current->duedate, end_date) <= 0) {
+                        printTaskInfo(current);
+                        found = 1;
+                    }
+                }
+                current = current->next;
+            }
+            
+            // Search completed tasks
+            printf("--- Completed Tasks ---\n");
+            node = stack->top;
+            while (node) {
+                task* t = node->task_data;
+                if (t->due_date_set) {
+                    // Check if task due date is within range
+                    if (compareDates(t->duedate, start_date) >= 0 && 
+                        compareDates(t->duedate, end_date) <= 0) {
+                        printTaskInfo(t);
+                        found = 1;
+                    }
+                }
+                node = node->next;
+            }
+            break;
+            
+        default:
+            printf("Invalid search option.\n");
+            return;
     }
     
     if (!found) {
-        printf("No task matching '%s' found.\n", keyword);
+        printf("No matching tasks found.\n");
     }
+}
+
+// Helper function to print task information consistently
+void printTaskInfo(task* t) {
+    printf("Name: %s\n", t->name);
+    printf("Description: %s\n", t->description);
+    printf("Priority: %d (%s)\n", t->priority, 
+           (t->priority == 1) ? "High" : (t->priority == 2) ? "Medium" : "Low");
+    printf("Status: %s\n", 
+           (t->status == PENDING) ? "Pending" : 
+           (t->status == COMPLETED) ? "Completed" : "Overdue");
+    if (t->due_date_set) {
+        printf("Due Date: %02d/%02d/%04d\n", 
+               t->duedate.day, t->duedate.month, t->duedate.year);
+    } else {
+        printf("Due Date: Not Set\n");
+    }
+    printf("-------------------------\n");
 }
 
 void showStats(task* head, completedstack* stack, date today) {
