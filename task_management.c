@@ -1,9 +1,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>   // Include for isspace()
+#include <ctype.h>
 #include <stdbool.h>
+#include "scheduler.h"
 #include "task_management.h"
+#include "searchandstat.h" // This is needed for showStats and show_time_stats
+
+
+
+void sortTasksByDueDate(task* tasks[], int count) {
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = 0; j < count - i - 1; j++) {
+            // Task with no due date goes to the end
+            if (!tasks[j]->due_date_set && tasks[j+1]->due_date_set) {
+                // Swap
+                task* temp = tasks[j];
+                tasks[j] = tasks[j+1];
+                tasks[j+1] = temp;
+            }
+            // Both have due dates, compare them
+            else if (tasks[j]->due_date_set && tasks[j+1]->due_date_set) {
+                if (compareDates(tasks[j]->duedate, tasks[j+1]->duedate) > 0) {
+                    // Swap
+                    task* temp = tasks[j];
+                    tasks[j] = tasks[j+1];
+                    tasks[j+1] = temp;
+                }
+            }
+        }
+    }
+}
 
 void add(tasklist* list) {
     task* new_task = (task*)malloc(sizeof(task));
@@ -11,6 +38,9 @@ void add(tasklist* list) {
         printf("Memory allocation failed.\n");
         return;
     }
+
+    // Initialize tag-related fields right after allocation
+    new_task->tag_count = 0;  // Initialize with no tags
 
     char task_name[100];
     bool is_valid_name = false; // Flag to control the loop
@@ -146,104 +176,236 @@ void view(tasklist* list, date today) {
         return;
     }
     
-    // Create arrays to group tasks by priority
-    taskqueue priorityQueues[3]; // For priorities 1, 2, 3
-    for (int i = 0; i < 3; i++) {
-        initQueue(&priorityQueues[i]);
-    }
-    
     // First, update statuses based on current date
     updateTaskStatuses(current, today);
+
+    // Create arrays to store tasks by priority and status
+    task* high_priority[100];
+    task* medium_priority[100];
+    task* low_priority[100];
+    task* overdue_tasks[100];
     
-    // Organize tasks by priority
+    int high_count = 0, medium_count = 0, low_count = 0, overdue_count = 0;
+    
+    // Organize tasks by priority and status
     while (current) {
-        int priority_index = current->priority - 1;
-        if (priority_index >= 0 && priority_index < 3) {
-            enqueue(&priorityQueues[priority_index], current);
+        // If task is overdue, add to overdue array regardless of priority
+        if (!current->completed && current->status == OVERDUE) {
+            overdue_tasks[overdue_count++] = current;
+        } 
+        // Otherwise, categorize by priority
+        else if (!current->completed) {
+            switch (current->priority) {
+                case 1: high_priority[high_count++] = current; break;
+                case 2: medium_priority[medium_count++] = current; break;
+                case 3: low_priority[low_count++] = current; break;
+            }
         }
         current = current->next;
     }
     
-    // Display tasks by priority and due date
-    for (int p = 0; p < 3; p++) {
-        // Create temporary arrays for sorting by date within each priority
-        task* tempList = NULL;
-        
-        // Dequeue all tasks from this priority queue
-        while (!isQueueEmpty(&priorityQueues[p])) {
-            task* t = dequeue(&priorityQueues[p]);
-            
-            // Insert in date-sorted order
-            if (!tempList || !t->due_date_set || 
-                (tempList->due_date_set && compareDates(t->duedate, tempList->duedate) < 0)) {
-                // Insert at beginning
-                t->next = tempList;
-                tempList = t;
-            } else {
-                // Insert in the middle or end
-                task* prev = tempList;
-                task* curr = tempList->next;
-                
-                while (curr && curr->due_date_set && 
-                       (!t->due_date_set || compareDates(curr->duedate, t->duedate) <= 0)) {
-                    prev = curr;
-                    curr = curr->next;
+    // Sort overdue tasks by how overdue they are (most overdue first)
+    for (int i = 0; i < overdue_count - 1; i++) {
+        for (int j = 0; j < overdue_count - i - 1; j++) {
+            if (overdue_tasks[j]->due_date_set && overdue_tasks[j+1]->due_date_set) {
+                if (compareDates(overdue_tasks[j]->duedate, overdue_tasks[j+1]->duedate) > 0) {
+                    // Swap
+                    task* temp = overdue_tasks[j];
+                    overdue_tasks[j] = overdue_tasks[j+1];
+                    overdue_tasks[j+1] = temp;
                 }
-                
-                t->next = curr;
-                prev->next = t;
             }
         }
-        
-        // Display this priority group and its tasks (sorted by date)
-        switch (p) {
-            case 0: printf("\n--- HIGH PRIORITY TASKS ---\n"); break;
-            case 1: printf("\n--- MEDIUM PRIORITY TASKS ---\n"); break;
-            case 2: printf("\n--- LOW PRIORITY TASKS ---\n"); break;
-        }
-        
-        // Print the sorted tasks
-        // Print the sorted tasks
-current = tempList;
-int taskCount = 0;
-task* next_temp;
-while (current) {
-    printf("Name: %s", current->name);
-    
-    // Show urgent tag for tasks due soon
-    if (!current->completed && current->due_date_set && isDateSoon(today, current->duedate, 2)) {
-        printf(" [!]URGENT");
     }
-    printf("\n");
     
-    printf("Description: %s\n", current->description);
-    printf("Status: ");
-    switch (current->status) {
-        case PENDING: printf("Pending\n"); break;
-        case COMPLETED: printf("Completed\n"); break;
-        case OVERDUE: printf("OVERDUE\n"); break;
-    }
-    if (current->due_date_set) {
-        printf("Due Date: %02d/%02d/%04d\n", 
-               current->duedate.day, current->duedate.month, current->duedate.year);
-    } else {
-        printf("Due Date: Not Set\n");
-    }
-    printf("-------------------------\n");
+    // Sort each priority group by due date
+    sortTasksByDueDate(high_priority, high_count);
+    sortTasksByDueDate(medium_priority, medium_count);
+    sortTasksByDueDate(low_priority, low_count);
     
-    next_temp = current->next;
-    current = next_temp;
-    taskCount++;
-}
-        if (taskCount == 0) {
-            printf("No tasks with this priority.\n");
+    // Display overdue tasks first
+    if (overdue_count > 0) {
+        printf("\n--- OVERDUE TASKS ---\n");
+        for (int i = 0; i < overdue_count; i++) {
+            printf("Name: %s [OVERDUE]\n", overdue_tasks[i]->name);
+            printf("Description: %s\n", overdue_tasks[i]->description);
+            printf("Priority: %d (%s)\n", overdue_tasks[i]->priority, 
+                   (overdue_tasks[i]->priority == 1) ? "High" : 
+                   (overdue_tasks[i]->priority == 2) ? "Medium" : "Low");
+            
+            if (overdue_tasks[i]->due_date_set) {
+                printf("Due Date: %02d/%02d/%04d (PAST DUE)\n", 
+                       overdue_tasks[i]->duedate.day, 
+                       overdue_tasks[i]->duedate.month, 
+                       overdue_tasks[i]->duedate.year);
+            } else {
+                printf("Due Date: Not Set\n");
+            }
             printf("-------------------------\n");
         }
-        
-        // Reset the temporary list without freeing the task nodes
-        tempList = NULL;
+    }
+    
+    // Display high priority tasks
+    if (high_count > 0) {
+        printf("\n--- HIGH PRIORITY TASKS ---\n");
+        printf("(Sorted by due date - earliest first)\n");
+        for (int i = 0; i < high_count; i++) {
+            printf("Name: %s", high_priority[i]->name);
+            
+            // Show urgent tag for tasks due soon
+            if (high_priority[i]->due_date_set && isDateSoon(today, high_priority[i]->duedate, 2)) {
+                printf(" [!]URGENT");
+            }
+            printf("\n");
+            
+            printf("Description: %s\n", high_priority[i]->description);
+            printf("Status: Pending\n");
+            
+            if (high_priority[i]->due_date_set) {
+                printf("Due Date: %02d/%02d/%04d", 
+                       high_priority[i]->duedate.day, 
+                       high_priority[i]->duedate.month, 
+                       high_priority[i]->duedate.year);
+                
+                // Calculate days until due
+                int daysLeft = getDaysBetween(today, high_priority[i]->duedate);
+                if (daysLeft == 0) {
+                    printf(" (DUE TODAY)");
+                } else if (daysLeft == 1) {
+                    printf(" (DUE TOMORROW)");
+                } else if (daysLeft > 0) {
+                    printf(" (%d days left)", daysLeft);
+                }
+                printf("\n");
+            } else {
+                printf("Due Date: Not Set\n");
+            }
+            printf("-------------------------\n");
+        }
+    } else {
+        printf("\n--- HIGH PRIORITY TASKS ---\n");
+        printf("No high priority tasks.\n");
+        printf("-------------------------\n");
+    }
+    
+    // Display medium priority tasks
+    if (medium_count > 0) {
+        printf("\n--- MEDIUM PRIORITY TASKS ---\n");
+        printf("(Sorted by due date - earliest first)\n");
+        for (int i = 0; i < medium_count; i++) {
+            printf("Name: %s", medium_priority[i]->name);
+            
+            // Show urgent tag for tasks due soon
+            if (medium_priority[i]->due_date_set && isDateSoon(today, medium_priority[i]->duedate, 2)) {
+                printf(" [!]URGENT");
+            }
+            printf("\n");
+            
+            printf("Description: %s\n", medium_priority[i]->description);
+            printf("Status: Pending\n");
+            
+            if (medium_priority[i]->due_date_set) {
+                printf("Due Date: %02d/%02d/%04d", 
+                       medium_priority[i]->duedate.day, 
+                       medium_priority[i]->duedate.month, 
+                       medium_priority[i]->duedate.year);
+                
+                // Calculate days until due
+                int daysLeft = getDaysBetween(today, medium_priority[i]->duedate);
+                if (daysLeft == 0) {
+                    printf(" (DUE TODAY)");
+                } else if (daysLeft == 1) {
+                    printf(" (DUE TOMORROW)");
+                } else if (daysLeft > 0) {
+                    printf(" (%d days left)", daysLeft);
+                }
+                printf("\n");
+            } else {
+                printf("Due Date: Not Set\n");
+            }
+            printf("-------------------------\n");
+        }
+    } else {
+        printf("\n--- MEDIUM PRIORITY TASKS ---\n");
+        printf("No medium priority tasks.\n");
+        printf("-------------------------\n");
+    }
+    
+    // Display low priority tasks
+    if (low_count > 0) {
+        printf("\n--- LOW PRIORITY TASKS ---\n");
+        printf("(Sorted by due date - earliest first)\n");
+        for (int i = 0; i < low_count; i++) {
+            printf("Name: %s", low_priority[i]->name);
+            
+            // Show urgent tag for tasks due soon
+            if (low_priority[i]->due_date_set && isDateSoon(today, low_priority[i]->duedate, 2)) {
+                printf(" [!]URGENT");
+            }
+            printf("\n");
+            
+            printf("Description: %s\n", low_priority[i]->description);
+            printf("Status: Pending\n");
+            
+            if (low_priority[i]->due_date_set) {
+                printf("Due Date: %02d/%02d/%04d", 
+                       low_priority[i]->duedate.day, 
+                       low_priority[i]->duedate.month, 
+                       low_priority[i]->duedate.year);
+                
+                // Calculate days until due
+                int daysLeft = getDaysBetween(today, low_priority[i]->duedate);
+                if (daysLeft == 0) {
+                    printf(" (DUE TODAY)");
+                } else if (daysLeft == 1) {
+                    printf(" (DUE TOMORROW)");
+                } else if (daysLeft > 0) {
+                    printf(" (%d days left)", daysLeft);
+                }
+                printf("\n");
+            } else {
+                printf("Due Date: Not Set\n");
+            }
+            printf("-------------------------\n");
+        }
+    } else {
+        printf("\n--- LOW PRIORITY TASKS ---\n");
+        printf("No low priority tasks.\n");
+        printf("-------------------------\n");
+    }
+    
+    // Display a summary
+    int total_tasks = overdue_count + high_count + medium_count + low_count;
+    printf("\n=== SUMMARY ===\n");
+    printf("Total Active Tasks: %d\n", total_tasks);
+    printf("Overdue: %d\n", overdue_count);
+    printf("High Priority: %d\n", high_count);
+    printf("Medium Priority: %d\n", medium_count);
+    printf("Low Priority: %d\n", low_count);
+    
+    // Check if there are any urgent tasks due soon
+    int urgent_count = 0;
+    for (int i = 0; i < high_count; i++) {
+        if (high_priority[i]->due_date_set && isDateSoon(today, high_priority[i]->duedate, 2)) {
+            urgent_count++;
+        }
+    }
+    for (int i = 0; i < medium_count; i++) {
+        if (medium_priority[i]->due_date_set && isDateSoon(today, medium_priority[i]->duedate, 2)) {
+            urgent_count++;
+        }
+    }
+    for (int i = 0; i < low_count; i++) {
+        if (low_priority[i]->due_date_set && isDateSoon(today, low_priority[i]->duedate, 2)) {
+            urgent_count++;
+        }
+    }
+    
+    if (urgent_count > 0) {
+        printf("Urgent Tasks (Due within 2 days): %d\n", urgent_count);
     }
 }
+
 
 
 void edit(tasklist* list, const char* taskname) {
@@ -266,7 +428,6 @@ void edit(tasklist* list, const char* taskname) {
                 printf("Invalid choice input. Aborting edit.\n");
                 return;
             }
-            // No getchar() needed after fgets
 
             switch (choice) {
                 case 1: {
@@ -338,11 +499,8 @@ void edit(tasklist* list, const char* taskname) {
                          strcpy(current->name, new_name);
                          printf("Task name updated.\n"); // Give specific feedback
                     }
-                    // If format_valid_and_not_same is false, it's because the name entered was the same as the old one.
-                    // No error, but no update needed. Message already printed inside loop.
-
-                    break; // Break from switch case 1
-                } // end case 1
+                    break;
+                }
                 case 2:
                     printf("Enter new description: ");
                     // Assuming description can be empty or whitespace, no validation added here
@@ -369,73 +527,65 @@ void edit(tasklist* list, const char* taskname) {
                     } else {
                         printf("Error reading priority input. Priority not changed.\n");
                     }
-                    // No getchar() needed
                     break;
-                } // end case 3
+                }
                 case 4: {
-                    // Using fgets for y/n is tricky. Let's stick to scanf + getchar for single char.
-                    // Alternatively read line with fgets and check buffer[0]
-                    char has_due_date;
-                    printf("Update the due date? (y/n): "); // Changed wording slightly
-                    // Read the character using fgets to be safer
-                    if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
-                         has_due_date = buffer[0]; // Take the first character
-
-                         if (has_due_date == 'y' || has_due_date == 'Y') {
-                            printf("Enter new due date (DD MM YYYY): ");
-                            if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
-                                int d, m, y;
-                                if (sscanf(buffer, "%d %d %d", &d, &m, &y) == 3) {
-                                     // Basic date validation
-                                    if (d < 1 || d > 31 || m < 1 || m > 12 || y < 2000) { // Basic check
-                                        printf("Warning: Date might be invalid (Day: %d, Month: %d, Year: %d). Using it anyway.\n", d, m, y);
+                    printf("Due Date Options:\n");
+                    printf("1. Set/Change due date\n");
+                    printf("2. Clear due date\n");
+                    printf("Enter choice (1-2): ");
+                    
+                    int due_date_choice;
+                    if (fgets(buffer, sizeof(buffer), stdin) != NULL && sscanf(buffer, "%d", &due_date_choice) == 1) {
+                        if (due_date_choice == 1) {
+                            // Set or change due date
+                            int valid_date = 0;
+                            
+                            while (!valid_date) {
+                                printf("Enter new due date (DD MM YYYY): ");
+                                int day, month, year;
+                                
+                                if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+                                    if (sscanf(buffer, "%d %d %d", &day, &month, &year) == 3) {
+                                        if (isValidDate(day, month, year)) {
+                                            current->duedate.day = day;
+                                            current->duedate.month = month;
+                                            current->duedate.year = year;
+                                            current->due_date_set = 1;
+                                            valid_date = 1;
+                                            printf("Task due date updated.\n");
+                                        } else {
+                                            printf("Invalid date. Please enter a valid date.\n");
+                                        }
+                                    } else {
+                                        printf("Invalid date format. Please use DD MM YYYY format.\n");
                                     }
-                                    current->duedate.day = d;
-                                    current->duedate.month = m;
-                                    current->duedate.year = y;
-                                    current->due_date_set = 1;
-                                    printf("Task due date updated.\n");
                                 } else {
-                                    printf("Invalid date format. Due date not changed.\n");
-                                    // Keep existing due date status (current->due_date_set remains unchanged)
+                                    printf("Error reading date input. Due date not changed.\n");
+                                    break;
                                 }
-                            } else {
-                                printf("Error reading date input. Due date not changed.\n");
                             }
-                         } else if (has_due_date == 'n' || has_due_date == 'N') {
-                            // Option to explicitly clear the due date?
-                             printf("Do you want to clear the existing due date? (y/n): ");
-                             if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
-                                if (buffer[0] == 'y' || buffer[0] == 'Y') {
-                                     current->due_date_set = 0;
-                                     printf("Due date cleared.\n");
-                                } else {
-                                     printf("Due date not changed.\n");
-                                }
-                             } else {
-                                printf("Error reading input. Due date not changed.\n");
-                             }
-                         } else {
-                             printf("Invalid choice ('%c'). Due date not changed.\n", has_due_date);
-                         }
+                        } else if (due_date_choice == 2) {
+                            // Clear due date
+                            current->due_date_set = 0;
+                            printf("Due date cleared.\n");
+                        } else {
+                            printf("Invalid choice. Due date not changed.\n");
+                        }
                     } else {
-                        printf("Error reading input. Due date not changed.\n");
+                        printf("Invalid input. Due date not changed.\n");
                     }
                     break;
-                } // end case 4
+                }
                 default:
                     printf("Invalid choice. Task not updated.\n");
-                    return; // Return here as no valid update was chosen
+                    return;
             }
-            // Only print "Task updated successfully!" if an actual change was made.
-            // The individual cases now print specific success messages.
-            // Maybe remove this general message or rephrase.
-            // printf("Task update process finished.\n");
-            return; // Exit function after successful edit or handling a specific case
+            return;
         }
         current = current->next;
     }
-    printf("Task '%s' not found.\n", taskname); // Clarify which task wasn't found
+    printf("Task '%s' not found.\n", taskname);
 }
 
 
@@ -648,5 +798,661 @@ void freeQueue(taskqueue* q) {
     while (!isQueueEmpty(q)) {
         dequeue(q);
     }
+}
+
+void add_tag_to_task(tasklist* list, const char* taskname) {
+    task* current = list->head;
+    
+    // Find the task
+    while (current && strcmp(current->name, taskname) != 0) {
+        current = current->next;
+    }
+    
+    if (!current) {
+        printf("Task '%s' not found.\n", taskname);
+        return;
+    }
+    
+    // Check if task already has maximum number of tags
+    if (current->tag_count >= MAX_TAGS) {
+        printf("This task already has the maximum number of tags (%d).\n", MAX_TAGS);
+        printf("Current tags: ");
+        for (int i = 0; i < current->tag_count; i++) {
+            printf("%s%s", current->tags[i], (i < current->tag_count - 1) ? ", " : "");
+        }
+        printf("\n");
+        
+        // Ask if user wants to replace a tag
+        printf("Would you like to replace a tag? (y/n): ");
+        char choice[5];
+        fgets(choice, sizeof(choice), stdin);
+        if (choice[0] != 'y' && choice[0] != 'Y') {
+            return;
+        }
+        
+        // Show tags with numbers
+        printf("Select a tag to replace (1-%d):\n", current->tag_count);
+        for (int i = 0; i < current->tag_count; i++) {
+            printf("%d. %s\n", i + 1, current->tags[i]);
+        }
+        
+        // Get user choice
+        int tag_index;
+        char buffer[10];
+        fgets(buffer, sizeof(buffer), stdin);
+        sscanf(buffer, "%d", &tag_index);
+        
+        if (tag_index < 1 || tag_index > current->tag_count) {
+            printf("Invalid selection. No tags were changed.\n");
+            return;
+        }
+        
+        // Get new tag
+        printf("Enter new tag: ");
+        char new_tag[MAX_TAG_LENGTH];
+        fgets(new_tag, sizeof(new_tag), stdin);
+        new_tag[strcspn(new_tag, "\n")] = 0;
+        
+        // Replace tag
+        strcpy(current->tags[tag_index - 1], new_tag);
+        printf("Tag replaced successfully.\n");
+        return;
+    }
+    
+    // Get tag from user
+    printf("Enter tag for '%s' (max %d chars): ", taskname, MAX_TAG_LENGTH - 1);
+    char new_tag[MAX_TAG_LENGTH];
+    fgets(new_tag, sizeof(new_tag), stdin);
+    new_tag[strcspn(new_tag, "\n")] = 0;
+    
+    // Check if tag already exists for this task
+    for (int i = 0; i < current->tag_count; i++) {
+        if (strcmp(current->tags[i], new_tag) == 0) {
+            printf("This task already has the tag '%s'.\n", new_tag);
+            return;
+        }
+    }
+    
+    // Add tag to task
+    strcpy(current->tags[current->tag_count], new_tag);
+    current->tag_count++;
+    printf("Tag '%s' added to task '%s'.\n", new_tag, taskname);
+}
+
+void view_by_tag(tasklist* list, const char* tag) {
+    task* current = list->head;
+    int found = 0;
+    
+    printf("\n=== Tasks with Tag '%s' ===\n", tag);
+    
+    while (current) {
+        // Check if task has the specified tag
+        for (int i = 0; i < current->tag_count; i++) {
+            if (strcmp(current->tags[i], tag) == 0) {
+                // Print task details
+                printf("Name: %s\n", current->name);
+                printf("Description: %s\n", current->description);
+                printf("Priority: %d\n", current->priority);
+                printf("Status: %s\n", 
+                       (current->status == PENDING) ? "Pending" : 
+                       (current->status == COMPLETED) ? "Completed" : "Overdue");
+                
+                if (current->due_date_set) {
+                    printf("Due Date: %02d/%02d/%04d\n", 
+                           current->duedate.day, current->duedate.month, current->duedate.year);
+                } else {
+                    printf("Due Date: Not Set\n");
+                }
+                
+                // Print all tags
+                printf("Tags: ");
+                for (int j = 0; j < current->tag_count; j++) {
+                    printf("%s%s", current->tags[j], (j < current->tag_count - 1) ? ", " : "");
+                }
+                printf("\n-------------------------\n");
+                
+                found = 1;
+                break;  // Found the tag, no need to check other tags for this task
+            }
+        }
+        
+        current = current->next;
+    }
+    
+    if (!found) {
+        printf("No tasks found with tag '%s'.\n", tag);
+    }
+}
+
+void sort_by_tag(tasklist* list) {
+    // First, get all unique tags from all tasks
+    char unique_tags[100][MAX_TAG_LENGTH];  // Assume max 100 unique tags
+    int tag_count = 0;
+    
+    task* current = list->head;
+    while (current) {
+        for (int i = 0; i < current->tag_count; i++) {
+            // Check if this tag is already in our unique_tags array
+            int is_unique = 1;
+            for (int j = 0; j < tag_count; j++) {
+                if (strcmp(current->tags[i], unique_tags[j]) == 0) {
+                    is_unique = 0;
+                    break;
+                }
+            }
+            
+            // If it's a new tag, add it to our array
+            if (is_unique) {
+                strcpy(unique_tags[tag_count], current->tags[i]);
+                tag_count++;
+            }
+        }
+        current = current->next;
+    }
+    
+    // Display tags and let user select one to view
+    if (tag_count == 0) {
+        printf("No tags found in any tasks.\n");
+        return;
+    }
+    
+    printf("\n=== Available Tags ===\n");
+    for (int i = 0; i < tag_count; i++) {
+        printf("%d. %s\n", i + 1, unique_tags[i]);
+    }
+    
+    printf("Select a tag to view (1-%d): ", tag_count);
+    char buffer[10];
+    fgets(buffer, sizeof(buffer), stdin);
+    int selection;
+    sscanf(buffer, "%d", &selection);
+    
+    if (selection < 1 || selection > tag_count) {
+        printf("Invalid selection.\n");
+        return;
+    }
+    
+    // View tasks with the selected tag
+    view_by_tag(list, unique_tags[selection - 1]);
+}
+
+void simplified_view(tasklist* list, date today) {
+    task* current = list->head;
+    printf("\n=== Simplified Task List ===\n");
+    
+    if (!current) {
+        printf("No tasks available.\n");
+        return;
+    }
+    
+    // First, update statuses based on current date
+    updateTaskStatuses(current, today);
+    
+    // Count tasks in each category
+    int overdue = 0, urgent = 0, pending = 0, today_count = 0;
+    
+    current = list->head;
+    while (current) {
+        if (!current->completed) {
+            if (current->status == OVERDUE) {
+                overdue++;
+            } else if (current->due_date_set && isDateSoon(today, current->duedate, 2)) {
+                urgent++;
+            } else {
+                pending++;
+            }
+            
+            // Count tasks due today
+            if (current->due_date_set && 
+                current->duedate.day == today.day &&
+                current->duedate.month == today.month &&
+                current->duedate.year == today.year) {
+                today_count++;
+            }
+        }
+        current = current->next;
+    }
+    
+    // Display status summary
+    printf("Overdue: %d | Urgent: %d | Due Today: %d | Pending: %d\n\n", 
+           overdue, urgent, today_count, pending);
+    
+    // Display all tasks in a compact format
+    current = list->head;
+    int count = 1;
+    
+    printf("%-3s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Status");
+    printf("---------------------------------------------------------------\n");
+    
+    while (current) {
+        if (!current->completed) {
+            char date_str[15] = "Not Set";
+            if (current->due_date_set) {
+                sprintf(date_str, "%02d/%02d/%04d", 
+                        current->duedate.day, 
+                        current->duedate.month, 
+                        current->duedate.year);
+            }
+            
+            char priority_str[10];
+            switch(current->priority) {
+                case 1: strcpy(priority_str, "High"); break;
+                case 2: strcpy(priority_str, "Medium"); break;
+                case 3: strcpy(priority_str, "Low"); break;
+                default: strcpy(priority_str, "Unknown");
+            }
+            
+            char status_str[10];
+            switch(current->status) {
+                case PENDING: strcpy(status_str, "Pending"); break;
+                case OVERDUE: strcpy(status_str, "OVERDUE"); break;
+                default: strcpy(status_str, "Unknown");
+            }
+            
+            // Add markers for special conditions
+            char name_with_markers[30] = "";
+            strncpy(name_with_markers, current->name, 25); // Copy up to 25 chars
+            
+            if (current->status == OVERDUE) {
+                strcat(name_with_markers, "!");
+            } else if (current->due_date_set && isDateSoon(today, current->duedate, 2)) {
+                strcat(name_with_markers, "*");
+            }
+            
+            printf("%-3d %-25s %-10s %-15s %-10s\n", 
+                   count++, name_with_markers, priority_str, date_str, status_str);
+        }
+        current = current->next;
+    }
+    
+    printf("\nLegend: ! = Overdue, * = Urgent (due within 2 days)\n");
+}
+
+// int isDateWithinDays(date today, date check_date, int days) {
+//     // Calculate total days for both dates (very simplified calculation)
+//     int today_days = today.year * 365 + today.month * 30 + today.day;
+//     int check_days = check_date.year * 365 + check_date.month * 30 + check_date.day;
+    
+//     // Check if the date is within the specified range
+//     int diff = check_days - today_days;
+//     return (diff >= 0 && diff <= days);
+// }
+
+void view_weekly_summary(tasklist* list, date today) {
+    task* current = list->head;
+    int count = 0;
+    
+    printf("\n=== Tasks Due This Week (%02d/%02d/%04d to %02d/%02d/%04d) ===\n", 
+           today.day, today.month, today.year,
+           today.day + 7, today.month, today.year); // Simple calculation, not accounting for month/year boundaries
+    
+    printf("%-3s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Days Left");
+    printf("---------------------------------------------------------------\n");
+    
+    // First pass: count tasks in each day of the week
+    int days_count[8] = {0}; // days_count[0] is for today, [1] for tomorrow, etc.
+    
+    while (current) {
+        if (!current->completed && current->due_date_set) {
+            int daysDiff = getDaysBetween(today, current->duedate);
+            if (daysDiff >= 0 && daysDiff <= 7) {
+                days_count[daysDiff]++;
+            }
+        }
+        current = current->next;
+    }
+    
+    // Print daily summary
+    printf("\nDaily summary:\n");
+    printf("Today: %d tasks\n", days_count[0]);
+    printf("Tomorrow: %d tasks\n", days_count[1]);
+    for (int i = 2; i <= 7; i++) {
+        printf("In %d days: %d tasks\n", i, days_count[i]);
+    }
+    printf("\n");
+    
+    // Second pass: print details of each task
+    current = list->head;
+    int task_num = 1;
+    
+    while (current) {
+        if (!current->completed && current->due_date_set) {
+            int daysDiff = getDaysBetween(today, current->duedate);
+            if (daysDiff >= 0 && daysDiff <= 7) {
+                char date_str[15];
+                sprintf(date_str, "%02d/%02d/%04d", 
+                        current->duedate.day, 
+                        current->duedate.month, 
+                        current->duedate.year);
+                
+                char priority_str[10];
+                switch(current->priority) {
+                    case 1: strcpy(priority_str, "High"); break;
+                    case 2: strcpy(priority_str, "Medium"); break;
+                    case 3: strcpy(priority_str, "Low"); break;
+                    default: strcpy(priority_str, "Unknown");
+                }
+                
+                char days_left[10];
+                if (daysDiff == 0) {
+                    strcpy(days_left, "Today");
+                } else if (daysDiff == 1) {
+                    strcpy(days_left, "Tomorrow");
+                } else {
+                    sprintf(days_left, "%d days", daysDiff);
+                }
+                
+                printf("%-3d %-25s %-10s %-15s %-10s\n", 
+                       task_num++, current->name, priority_str, date_str, days_left);
+                count++;
+            }
+        }
+        current = current->next;
+    }
+    
+    if (count == 0) {
+        printf("No tasks due this week.\n");
+    } else {
+        printf("\nTotal: %d tasks due this week\n", count);
+    }
+}
+
+// void show_combined_stats(task* head, completedstack* stack, date today) {
+//     int choice;
+//     char buffer[10];
+    
+//     printf("\n=== Task Statistics View ===\n");
+//     printf("1. All-time Statistics\n");
+//     printf("2. Weekly Statistics\n");
+//     printf("3. Monthly Statistics\n");
+//     printf("Enter your choice (1-3): ");
+    
+//     if (fgets(buffer, sizeof(buffer), stdin) == NULL || sscanf(buffer, "%d", &choice) != 1) {
+//         printf("Invalid input. Showing all-time statistics by default.\n");
+//         choice = 1;
+//     }
+    
+//     switch(choice) {
+//         case 1:
+//             showStats(head, stack, today);  // Original all-time stats function
+//             break;
+//         case 2:
+//             show_time_stats(head, stack, today, 0);  // Weekly stats (0 = week)
+//             break;
+//         case 3:
+//             show_time_stats(head, stack, today, 1);  // Monthly stats (1 = month)
+//             break;
+//         default:
+//             printf("Invalid option. Showing all-time statistics.\n");
+//             showStats(head, stack, today);
+//     }
+// }
+
+void view_time_summary(tasklist* list, date today) {
+    int choice;
+    char buffer[10];
+    
+    printf("\n=== Time Period Summary ===\n");
+    printf("1. Weekly Summary (Next 7 days)\n");
+    printf("2. Monthly Summary (Current month)\n");
+    printf("Enter your choice (1-2): ");
+    
+    if (fgets(buffer, sizeof(buffer), stdin) == NULL || sscanf(buffer, "%d", &choice) != 1) {
+        printf("Invalid input. Showing weekly summary by default.\n");
+        choice = 1;
+    }
+    
+    switch(choice) {
+        case 1:
+            view_weekly_summary(list, today);
+            break;
+        case 2:
+            view_monthly_summary(list, today);
+            break;
+        default:
+            printf("Invalid option. Showing weekly summary.\n");
+            view_weekly_summary(list, today);
+    }
+}
+
+void view_combined(tasklist* list, date today) {
+    int choice;
+    char buffer[10];
+    
+    printf("\n=== Task View Options ===\n");
+    printf("1. Standard View (All Tasks)\n");
+    printf("2. Simplified View (Compact Format)\n");
+    printf("3. View by Tag\n");
+    printf("Enter your choice (1-3): ");
+    
+    if (fgets(buffer, sizeof(buffer), stdin) == NULL || sscanf(buffer, "%d", &choice) != 1) {
+        printf("Invalid input. Using standard view by default.\n");
+        choice = 1;
+    }
+    
+    switch(choice) {
+        case 1:
+            view(list, today);  // Original view function
+            break;
+        case 2:
+            simplified_view(list, today);
+            break;
+        case 3:
+            sort_by_tag(list);  // This function already includes tag selection
+            break;
+        default:
+            printf("Invalid option. Using standard view.\n");
+            view(list, today);
+    }
+}
+
+void view_monthly_summary(tasklist* list, date today) {
+    task* current = list->head;
+    int count = 0;
+    
+    // Calculate the end date of the month (simplified, not accounting for different month lengths)
+    int days_in_month;
+    switch (today.month) {
+        case 2: // February
+            // Simple leap year check
+            if ((today.year % 4 == 0 && today.year % 100 != 0) || today.year % 400 == 0) {
+                days_in_month = 29;
+            } else {
+                days_in_month = 28;
+            }
+            break;
+        case 4: case 6: case 9: case 11: // 30-day months
+            days_in_month = 30;
+            break;
+        default: // 31-day months
+            days_in_month = 31;
+    }
+    
+    printf("\n=== Tasks Due This Month (%02d/%04d) ===\n", today.month, today.year);
+    
+    printf("%-3s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Days Left");
+    printf("---------------------------------------------------------------\n");
+    
+    // Count tasks by week
+    int week_count[5] = {0}; // 5 weeks in a month (approximately)
+    
+    while (current) {
+        if (!current->completed && current->due_date_set) {
+            // Check if the task is due this month
+            if (current->duedate.month == today.month && current->duedate.year == today.year) {
+                int daysDiff = getDaysBetween(today, current->duedate);
+                if (daysDiff >= 0) {
+                    int week = daysDiff / 7;
+                    if (week < 5) {
+                        week_count[week]++;
+                    }
+                }
+            }
+        }
+        current = current->next;
+    }
+    
+    // Print weekly summary
+    printf("\nWeekly summary:\n");
+    printf("This week (next 7 days): %d tasks\n", week_count[0]);
+    printf("Next week (8-14 days): %d tasks\n", week_count[1]);
+    printf("Week 3 (15-21 days): %d tasks\n", week_count[2]);
+    printf("Week 4 (22-28 days): %d tasks\n", week_count[3]);
+    if (days_in_month > 28) {
+        printf("End of month (29+ days): %d tasks\n", week_count[4]);
+    }
+    printf("\n");
+    
+    // Print task details
+    current = list->head;
+    int task_num = 1;
+    
+    while (current) {
+        if (!current->completed && current->due_date_set) {
+            // Check if the task is due this month
+            if (current->duedate.month == today.month && current->duedate.year == today.year) {
+                char date_str[15];
+                sprintf(date_str, "%02d/%02d/%04d", 
+                        current->duedate.day, 
+                        current->duedate.month, 
+                        current->duedate.year);
+                
+                char priority_str[10];
+                switch(current->priority) {
+                    case 1: strcpy(priority_str, "High"); break;
+                    case 2: strcpy(priority_str, "Medium"); break;
+                    case 3: strcpy(priority_str, "Low"); break;
+                    default: strcpy(priority_str, "Unknown");
+                }
+                
+                int daysDiff = getDaysBetween(today, current->duedate);
+                char days_left[10];
+                if (daysDiff == 0) {
+                    strcpy(days_left, "Today");
+                } else if (daysDiff == 1) {
+                    strcpy(days_left, "Tomorrow");
+                } else {
+                    sprintf(days_left, "%d days", daysDiff);
+                }
+                
+                printf("%-3d %-25s %-10s %-15s %-10s\n", 
+                       task_num++, current->name, priority_str, date_str, days_left);
+                count++;
+            }
+        }
+        current = current->next;
+    }
+    
+    if (count == 0) {
+        printf("No tasks due this month.\n");
+    } else {
+        printf("\nTotal: %d tasks due this month\n", count);
+    }
+}
+
+void text_converter(const char* input_text, tasklist* list) {
+    if (!input_text || strlen(input_text) == 0) {
+        printf("Please enter the text to convert to tasks:\n");
+        char buffer[1000];
+        fgets(buffer, sizeof(buffer), stdin);
+        input_text = buffer;
+    }
+    
+    // Make a copy of the input text to avoid modifying the original
+    char text_copy[5000];
+    strncpy(text_copy, input_text, sizeof(text_copy) - 1);
+    text_copy[sizeof(text_copy) - 1] = '\0';
+    
+    // Split text by lines
+    char* line = strtok(text_copy, "\n");
+    int tasks_added = 0;
+    
+    while (line) {
+        // Skip empty lines
+        if (strlen(line) == 0) {
+            line = strtok(NULL, "\n");
+            continue;
+        }
+        
+        // Basic parsing: Each line becomes a task
+        task* new_task = (task*)malloc(sizeof(task));
+        if (!new_task) {
+            printf("Memory allocation failed.\n");
+            return;
+        }
+        
+        // Initialize tag count
+        new_task->tag_count = 0;
+        
+        // Extract task name (use first 80 chars or up to colon if present)
+        char* colon = strchr(line, ':');
+        if (colon) {
+            int name_len = colon - line;
+            if (name_len > 99) name_len = 99;
+            strncpy(new_task->name, line, name_len);
+            new_task->name[name_len] = '\0';
+            
+            // Description is everything after the colon
+            if (strlen(colon + 1) > 0) {
+                strncpy(new_task->description, colon + 1, sizeof(new_task->description) - 1);
+                new_task->description[sizeof(new_task->description) - 1] = '\0';
+                // Trim leading spaces in description
+                char* desc_start = new_task->description;
+                while (*desc_start == ' ' || *desc_start == '\t') {
+                    desc_start++;
+                }
+                if (desc_start != new_task->description) {
+                    memmove(new_task->description, desc_start, strlen(desc_start) + 1);
+                }
+            } else {
+                strcpy(new_task->description, "");
+            }
+        } else {
+            // No colon found, use the whole line as name
+            strncpy(new_task->name, line, sizeof(new_task->name) - 1);
+            new_task->name[sizeof(new_task->name) - 1] = '\0';
+            strcpy(new_task->description, "");
+        }
+        
+        // Trim trailing spaces in name
+        int len = strlen(new_task->name);
+        while (len > 0 && (new_task->name[len-1] == ' ' || new_task->name[len-1] == '\t')) {
+            new_task->name[--len] = '\0';
+        }
+        
+        // Check for duplicate task name
+        if (isTaskNameDuplicate(list, new_task->name)) {
+            // Append a unique identifier to the name
+            char unique_name[100];
+            sprintf(unique_name, "%s (%d)", new_task->name, tasks_added + 1);
+            strcpy(new_task->name, unique_name);
+        }
+        
+        // Set default values
+        new_task->priority = 2;  // Medium priority by default
+        new_task->due_date_set = 0;  // No due date
+        new_task->completed = 0;  // Not completed
+        new_task->status = PENDING;  // Pending status
+        
+        // Look for priority indicators
+        if (strstr(line, "!") || 
+            strstr(line, "high") || strstr(line, "HIGH") || 
+            strstr(line, "urgent") || strstr(line, "URGENT")) {
+            new_task->priority = 1;  // High priority
+        } else if (strstr(line, "low") || strstr(line, "LOW") || 
+                   strstr(line, "later") || strstr(line, "LATER")) {
+            new_task->priority = 3;  // Low priority
+        }
+        
+        // Add to list
+        new_task->next = list->head;
+        list->head = new_task;
+        tasks_added++;
+        
+        // Get next line
+        line = strtok(NULL, "\n");
+    }
+    
+    printf("%d tasks added from text.\n", tasks_added);
 }
 
