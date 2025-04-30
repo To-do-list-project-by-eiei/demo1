@@ -81,11 +81,11 @@ It’s designed to improve productivity, reduce stress, and provide an organized
 
 first
 ```bash
-gcc main.c task_management.c scheduler.c searchandstat.c fileio.c -o main
+gcc main.c task_management.c searchandstat.c scheduler.c fileio.c
 ```
 then 
 ```bash
-./main
+./todolist
 ```
 the file should run properly
 
