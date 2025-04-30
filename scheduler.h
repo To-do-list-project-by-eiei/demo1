@@ -30,6 +30,12 @@ void clearcompletedtask(stacknode** completedstack);
 void updateTaskStatuses(task* head, date today);
 int isDateSoon(date today, date duedate, int daysThreshold);
 
+// Function for checking if a date is valid
+int isValidDate(int day, int month, int year);
+
+// Function for checking if a date is within a certain number of days
+int isDateWithinDays(date today, date check_date, int days);
+
 // New function for reminders
 void checkReminders(task* head, date today);
 
