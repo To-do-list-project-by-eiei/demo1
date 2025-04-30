@@ -17,6 +17,20 @@ date getToday() {
     return today;  // Ensure it returns 'date'
 }
 
+int isValidDate(int day, int month, int year) {
+    if (year < 1900 || month < 1 || month > 12 || day < 1)
+        return 0;
+        
+    // Days in each month
+    int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    
+    // Adjust for leap years
+    if (month == 2 && ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)))
+        daysInMonth[2] = 29;
+        
+    return day <= daysInMonth[month];
+}
+
 void setDueDate(task* t, int day, int month, int year) {
     if (t) {
         t->duedate.day = day;
@@ -102,21 +116,21 @@ void autoPriorityAdjust(task* head, date today) {
                 // Overdue tasks are always high priority
                 if (current->priority != 1) {
                     current->priority = 1;
-                    printf("Priority for '%s' auto-adjusted to HIGH (overdue)\n", current->name);
+                    printf("Priority for '%s' auto-adjusted to HIGH \n", current->name);
                 }
             }
             else if (daysUntilDue <= 2) {
                 // Tasks due within 2 days are at least medium priority
-                if (current->priority > 2) {
-                    current->priority = 2;
-                    printf("Priority for '%s' auto-adjusted to MEDIUM (due soon)\n", current->name);
+                if (current->priority > 1) {
+                    current->priority = 1;
+                    printf("Priority for '%s' auto-adjusted to HIGH \n", current->name);
                 }
             }
             else if (daysUntilDue <= 1) {
                 // Tasks due tomorrow are high priority
                 if (current->priority != 1) {
                     current->priority = 1;
-                    printf("Priority for '%s' auto-adjusted to HIGH (due tomorrow)\n", current->name);
+                    printf("Priority for '%s' auto-adjusted to HIGH \n", current->name);
                 }
             }
         }
@@ -229,4 +243,23 @@ void simulateDayChange(task* head, date* currentDate) {
     } else {
         printf("\nSummary: %d overdue task(s), %d urgent task(s)\n", overdueCount, soonCount);
     }
+}
+
+// int isValidDate(int day, int month, int year) {
+//     if (year < 1900 || month < 1 || month > 12 || day < 1)
+//         return 0;
+//     int daysInMonth[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
+//     if (month == 2 && ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)))
+//         daysInMonth[2] = 29;
+//     return day <= daysInMonth[month];
+// }
+
+int isDateWithinDays(date today, date check_date, int days) {
+    // Calculate total days for both dates (very simplified calculation)
+    int today_days = today.year * 365 + today.month * 30 + today.day;
+    int check_days = check_date.year * 365 + check_date.month * 30 + check_date.day;
+    
+    // Check if the date is within the specified range
+    int diff = check_days - today_days;
+    return (diff >= 0 && diff <= days);
 }
