@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "scheduler.h"
 #include "task_management.h"
 #include "searchandstat.h"
-#include "scheduler.h"
 #include "fileio.h"
 
 tasklist tasks = {NULL};
@@ -101,21 +101,25 @@ void debugTaskList() {
 void displayMenu() {
     printf("\n=== TO-DO LIST MENU ===\n");
     printf("1. Add Task\n");
-    printf("2. View Tasks\n");
+    printf("2. View Tasks (Standard/Simplified/By Tag)\n");
     printf("3. Edit Task\n");
     printf("4. Mark Task as Completed\n");
     printf("5. Undo Last Completed Task\n");
     printf("6. Delete Task\n");
     printf("7. Search Tasks\n");
-    printf("8. View Statistics (Progress)\n");
+    printf("8. View Statistics (All/Week/Month)\n");
     printf("9. Clear All Completed Tasks\n");
     printf("10. Import Tasks\n");
     printf("11. Export Tasks\n");
     printf("12. Daily Completed Tasks\n");
     printf("13. Simulate Day Change\n");
+    printf("14. Time Period Summary (Week/Month)\n");
+    printf("15. Add Tag to Task\n");
+    printf("16. Import Tasks from Text\n");
     printf("0. Exit\n");
     printf("Select an option: ");
 }
+
 
 int main() {
     int choice;
@@ -133,7 +137,7 @@ int main() {
                 pause();
                 break;
             case 2: 
-                view(&tasks, currentDate);  // Pass the current date
+                view_combined(&tasks, currentDate);  // Combined view function
                 pause();
                 break;
             case 3: {
@@ -169,66 +173,84 @@ int main() {
             }
             case 7: {
                 char keyword[100];
-                // printf("Enter keyword to search: ");
-                // fgets(keyword, sizeof(keyword), stdin);
-                // keyword[strcspn(keyword, "\n")] = 0;
                 searchTasks(tasks.head, &doneStack, keyword);
                 pause();
                 break;
             }
             case 8:
-                showStats(tasks.head, &doneStack, currentDate);  // Pass the current date
+                show_combined_stats(tasks.head, &doneStack, currentDate);  // Combined stats function
                 pause();
                 break;
             case 9:
-                clearcompletedtask(&(doneStack.top)); // <-- Your function from scheduler.h
+                clearcompletedtask(&(doneStack.top));
                 pause();
                 break;
-            
             case 10: {
-                    char filename[100];
-                    printf("Enter filename to import (default: tasks_import.txt): ");
-                    fgets(filename, sizeof(filename), stdin);
-                    filename[strcspn(filename, "\n")] = 0;
-                    
-                    if (strlen(filename) == 0) {
-                        strcpy(filename, "tasks_import.txt");
-                    }
-                    
-                    importTasks(&tasks, filename);
-                    pause();
-                    break;
+                char filename[100];
+                printf("Enter filename to import (default: tasks_import.txt): ");
+                fgets(filename, sizeof(filename), stdin);
+                filename[strcspn(filename, "\n")] = 0;
+                
+                if (strlen(filename) == 0) {
+                    strcpy(filename, "tasks_import.txt");
                 }
-
+                
+                importTasks(&tasks, filename);
+                pause();
+                break;
+            }
             case 11: {
-                    char filename[100];
-                    printf("Enter filename for export (default: tasks_export.txt): ");
-                    fgets(filename, sizeof(filename), stdin);
-                    filename[strcspn(filename, "\n")] = 0;
-                    
-                    if (strlen(filename) == 0) {
-                        strcpy(filename, "tasks_export.txt");
-                    }
-                    
-                    exportTasksTxt(tasks.head, &doneStack, filename);
-                    pause();
-                    break;
+                char filename[100];
+                printf("Enter filename for export (default: tasks_export.txt): ");
+                fgets(filename, sizeof(filename), stdin);
+                filename[strcspn(filename, "\n")] = 0;
+                
+                if (strlen(filename) == 0) {
+                    strcpy(filename, "tasks_export.txt");
                 }
-
+                
+                exportTasksTxt(tasks.head, &doneStack, filename);
+                pause();
+                break;
+            }
             case 12:
                 doneToday(&tasks, &doneStack);
                 pause();
                 break;
             case 13:
-                simulateDayChange(tasks.head, &currentDate);  // Pass address of currentDate
+                simulateDayChange(tasks.head, &currentDate);
                 pause();
                 break;
-
+            case 14:
+                view_time_summary(&tasks, currentDate);  // Combined time summary function
+                pause();
+                break;
+            case 15: {
+                char name[100];
+                printf("Enter task name to add tag: ");
+                fgets(name, sizeof(name), stdin);
+                name[strcspn(name, "\n")] = 0;
+                add_tag_to_task(&tasks, name);
+                pause();
+                break;
+            }
+            case 16: {
+                printf("Enter text to convert to tasks (finish with an empty line):\n");
+                char buffer[5000] = "";
+                char line[500];
+                while (1) {
+                    if (fgets(line, sizeof(line), stdin) == NULL) break;
+                    if (line[0] == '\n' || line[0] == '\0') break;  // Empty line stops input
+                    strcat(buffer, line);
+                }
+                text_converter(buffer, &tasks);
+                pause();
+                break;
+            }
             case 99:  // Hidden debug option
                 debugTaskList();
                 pause();
                 break;
-            
             case 0:
                 printf("Exiting...\n");
                 freeTasks(&tasks);
@@ -240,3 +262,5 @@ int main() {
         }
     }        
 }
+
+
