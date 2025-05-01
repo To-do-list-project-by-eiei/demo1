@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdbool.h>
 #include "scheduler.h"       // Add this first to get isDateWithinDays
 #include "task_management.h"
 #include "searchandstat.h"
 
+// Updated searchTasks function with keyword search option, with fixed variable names
 void searchTasks(task* head, completedstack* stack, const char* keyword) {
     int found = 0;
     int search_option;
@@ -21,7 +23,8 @@ void searchTasks(task* head, completedstack* stack, const char* keyword) {
     printf("4. Status (Pending/Completed/Overdue)\n");
     printf("5. Due Date Range\n");
     printf("6. Tasks with No Due Date\n");
-    printf("Enter your choice (1-6): ");
+    printf("7. Keyword (search all fields)\n");  // New option
+    printf("Enter your choice (1-7): ");
     
     if (fgets(buffer, sizeof(buffer), stdin) == NULL || sscanf(buffer, "%d", &search_option) != 1) {
         printf("Invalid input. Search aborted.\n");
@@ -98,6 +101,7 @@ void searchTasks(task* head, completedstack* stack, const char* keyword) {
             break;
             
         case 3: // Priority Range
+            // [Keep existing code for case 3]
             printf("Enter minimum priority (1-High, 3-Low): ");
             if (fgets(buffer, sizeof(buffer), stdin) == NULL || sscanf(buffer, "%d", &min_priority) != 1) {
                 printf("Invalid input. Search aborted.\n");
@@ -144,6 +148,7 @@ void searchTasks(task* head, completedstack* stack, const char* keyword) {
             break;
             
         case 4: // Status
+            // [Keep existing code for case 4]
             printf("Search by status:\n");
             printf("1. Pending\n");
             printf("2. Completed\n");
@@ -173,30 +178,31 @@ void searchTasks(task* head, completedstack* stack, const char* keyword) {
             // For completed tasks, we primarily search the stack
             if (search_status == COMPLETED) {
                 printf("--- Completed Tasks ---\n");
-                stacknode* node = stack->top;
-                while (node) {
-                    task* t = node->task_data;
+                stacknode* status_node = stack->top;
+                while (status_node) {
+                    task* t = status_node->task_data;
                     if (t->status == search_status) {
                         printTaskInfo(t);
                         found = 1;
                     }
-                    node = node->next;
+                    status_node = status_node->next;
                 }
             } else {
                 // For PENDING/OVERDUE we search the main list
                 printf("--- Tasks ---\n");
-                task* current = head;
-                while (current) {
-                    if (current->status == search_status) {
-                        printTaskInfo(current);
+                task* status_current = head;
+                while (status_current) {
+                    if (status_current->status == search_status) {
+                        printTaskInfo(status_current);
                         found = 1;
                     }
-                    current = current->next;
+                    status_current = status_current->next;
                 }
             }
             break;
             
         case 5: // Due Date Range
+            // [Keep existing code for case 5]
             printf("Enter start date (DD MM YYYY): ");
             if (fgets(buffer, sizeof(buffer), stdin) == NULL || 
                 sscanf(buffer, "%d %d %d", &start_date.day, &start_date.month, &start_date.year) != 3) {
@@ -224,24 +230,24 @@ void searchTasks(task* head, completedstack* stack, const char* keyword) {
             
             // Search pending tasks
             printf("--- Pending Tasks ---\n");
-            current = head;
-            while (current) {
-                if (current->due_date_set) {
+            task* date_current = head;
+            while (date_current) {
+                if (date_current->due_date_set) {
                     // Check if task due date is within range
-                    if (compareDates(current->duedate, start_date) >= 0 && 
-                        compareDates(current->duedate, end_date) <= 0) {
-                        printTaskInfo(current);
+                    if (compareDates(date_current->duedate, start_date) >= 0 && 
+                        compareDates(date_current->duedate, end_date) <= 0) {
+                        printTaskInfo(date_current);
                         found = 1;
                     }
                 }
-                current = current->next;
+                date_current = date_current->next;
             }
             
             // Search completed tasks
             printf("--- Completed Tasks ---\n");
-            node = stack->top;
-            while (node) {
-                task* t = node->task_data;
+            stacknode* date_node = stack->top;
+            while (date_node) {
+                task* t = date_node->task_data;
                 if (t->due_date_set) {
                     // Check if task due date is within range
                     if (compareDates(t->duedate, start_date) >= 0 && 
@@ -250,34 +256,136 @@ void searchTasks(task* head, completedstack* stack, const char* keyword) {
                         found = 1;
                     }
                 }
-                node = node->next;
+                date_node = date_node->next;
             }
             break;
             
         case 6: // Tasks with No Due Date
+            // [Keep existing code for case 6]
             printf("\n=== Tasks with No Due Date ===\n");
             
             // Search pending tasks
             printf("--- Pending Tasks ---\n");
-            current = head;
-            while (current) {
-                if (!current->due_date_set) {
-                    printTaskInfo(current);
+            task* nodate_current = head;
+            while (nodate_current) {
+                if (!nodate_current->due_date_set) {
+                    printTaskInfo(nodate_current);
                     found = 1;
                 }
-                current = current->next;
+                nodate_current = nodate_current->next;
             }
             
             // Search completed tasks
             printf("--- Completed Tasks ---\n");
-            node = stack->top;
-            while (node) {
-                task* t = node->task_data;
+            stacknode* nodate_node = stack->top;
+            while (nodate_node) {
+                task* t = nodate_node->task_data;
                 if (!t->due_date_set) {
                     printTaskInfo(t);
                     found = 1;
                 }
-                node = node->next;
+                nodate_node = nodate_node->next;
+            }
+            break;
+            
+        case 7: // Keyword search (new option)
+            printf("Enter keyword to search in all fields: ");
+            if (fgets(new_keyword, sizeof(new_keyword), stdin) == NULL) {
+                printf("Error reading keyword. Search aborted.\n");
+                return;
+            }
+            new_keyword[strcspn(new_keyword, "\n")] = 0;
+            
+            printf("\n=== Keyword Search Results for '%s' ===\n", new_keyword);
+            
+            // Search pending tasks
+            printf("--- Pending Tasks ---\n");
+            task* keyword_current = head;
+            while (keyword_current) {
+                // Check name, description, and tags
+                int found_in_task = 0;
+                
+                // Check name
+                if (strstr(keyword_current->name, new_keyword)) {
+                    found_in_task = 1;
+                }
+                
+                // Check description
+                if (!found_in_task && strstr(keyword_current->description, new_keyword)) {
+                    found_in_task = 1;
+                }
+                
+                // Check tags
+                if (!found_in_task) {
+                    for (int i = 0; i < keyword_current->tag_count; i++) {
+                        if (strstr(keyword_current->tags[i], new_keyword)) {
+                            found_in_task = 1;
+                            break;
+                        }
+                    }
+                }
+                
+                if (found_in_task) {
+                    printTaskInfo(keyword_current);
+                    // Add tag information to output
+                    if (keyword_current->tag_count > 0) {
+                        printf("Tags: ");
+                        for (int i = 0; i < keyword_current->tag_count; i++) {
+                            printf("%s%s", keyword_current->tags[i], 
+                                  (i < keyword_current->tag_count - 1) ? ", " : "\n");
+                        }
+                        printf("-------------------------\n");
+                    }
+                    found = 1;
+                }
+                
+                keyword_current = keyword_current->next;
+            }
+            
+            // Search completed tasks
+            printf("--- Completed Tasks ---\n");
+            stacknode* keyword_node = stack->top;
+            while (keyword_node) {
+                task* t = keyword_node->task_data;
+                
+                // Check name, description, and tags
+                int found_in_task = 0;
+                
+                // Check name
+                if (strstr(t->name, new_keyword)) {
+                    found_in_task = 1;
+                }
+                
+                // Check description
+                if (!found_in_task && strstr(t->description, new_keyword)) {
+                    found_in_task = 1;
+                }
+                
+                // Check tags
+                if (!found_in_task) {
+                    for (int i = 0; i < t->tag_count; i++) {
+                        if (strstr(t->tags[i], new_keyword)) {
+                            found_in_task = 1;
+                            break;
+                        }
+                    }
+                }
+                
+                if (found_in_task) {
+                    printTaskInfo(t);
+                    // Add tag information to output
+                    if (t->tag_count > 0) {
+                        printf("Tags: ");
+                        for (int i = 0; i < t->tag_count; i++) {
+                            printf("%s%s", t->tags[i], 
+                                  (i < t->tag_count - 1) ? ", " : "\n");
+                        }
+                        printf("-------------------------\n");
+                    }
+                    found = 1;
+                }
+                
+                keyword_node = keyword_node->next;
             }
             break;
             
