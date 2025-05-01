@@ -115,7 +115,6 @@ void displayMenu() {
     printf("13. Simulate Day Change\n");
     printf("14. Time Period Summary (Week/Month)\n");
     printf("15. Add Tag to Task\n");
-    printf("16. Import Tasks from Text\n");
     printf("0. Exit\n");
     printf("Select an option: ");
 }
@@ -234,19 +233,7 @@ int main() {
                 pause();
                 break;
             }
-            case 16: {
-                printf("Enter text to convert to tasks (finish with an empty line):\n");
-                char buffer[5000] = "";
-                char line[500];
-                while (1) {
-                    if (fgets(line, sizeof(line), stdin) == NULL) break;
-                    if (line[0] == '\n' || line[0] == '\0') break;  // Empty line stops input
-                    strcat(buffer, line);
-                }
-                text_converter(buffer, &tasks);
-                pause();
-                break;
-            }
+            
             case 99:  // Hidden debug option
                 debugTaskList();
                 pause();
