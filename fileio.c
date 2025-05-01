@@ -14,205 +14,243 @@ void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
         return;
     }
 
+    // Get current date for export timestamp
+    date today = getToday();
+    
     // Track how many tasks we export in each category
     int pending_count = 0, completed_count = 0, overdue_count = 0;
+    int high_count = 0, medium_count = 0, low_count = 0;
     int total_exported = 0;
 
     // Write a header to the file
     fprintf(file, "===== TO-DO LIST EXPORT =====\n");
-    fprintf(file, "Date Exported: %s\n\n", __DATE__);
+    fprintf(file, "Date Exported: %02d/%02d/%04d\n\n", today.day, today.month, today.year);
 
-    // --- PENDING TASKS SECTION ---
-    fprintf(file, "===== PENDING TASKS =====\n");
-
-    // Create arrays to store tasks for sorting
-    task* pending_tasks[200]; // Assuming max 200 pending tasks
-    int pending_tasks_count = 0;
-
-    // Collect all pending tasks
+    // Count tasks in each category for summary
     task* current = head;
     while (current) {
-        if (!current->completed && current->status == PENDING) {
-            pending_tasks[pending_tasks_count++] = current;
+        if (!current->completed) {
+            if (current->status == OVERDUE) {
+                overdue_count++;
+            } else {
+                pending_count++;
+            }
+            
+            // Count by priority
+            switch(current->priority) {
+                case 1: high_count++; break;
+                case 2: medium_count++; break;
+                case 3: low_count++; break;
+            }
         }
         current = current->next;
     }
-
-    // Sort pending tasks by due date
-    for (int i = 0; i < pending_tasks_count - 1; i++) {
-        for (int j = 0; j < pending_tasks_count - i - 1; j++) {
-            // If first task has no due date, or second task has due date and is earlier
-            if (!pending_tasks[j]->due_date_set || 
-                (pending_tasks[j+1]->due_date_set && 
-                 pending_tasks[j]->due_date_set &&
-                 compareDates(pending_tasks[j]->duedate, pending_tasks[j+1]->duedate) > 0)) {
-                // Swap
-                task* temp = pending_tasks[j];
-                pending_tasks[j] = pending_tasks[j+1];
-                pending_tasks[j+1] = temp;
-            }
-        }
-    }
-
-    // Export pending tasks sorted by due date
-    if (pending_tasks_count > 0) {
-        fprintf(file, "\n--- Sorted by Due Date (Soonest First) ---\n");
-        
-        for (int i = 0; i < pending_tasks_count; i++) {
-            fprintf(file, "Task: %s\n", pending_tasks[i]->name);
-            fprintf(file, "Description: %s\n", pending_tasks[i]->description);
-            fprintf(file, "Priority: %d (%s)\n", pending_tasks[i]->priority, 
-                  (pending_tasks[i]->priority == 1) ? "High" : 
-                  (pending_tasks[i]->priority == 2) ? "Medium" : "Low");
-            
-            if (pending_tasks[i]->due_date_set) {
-                fprintf(file, "Due Date: %02d/%02d/%04d\n",
-                      pending_tasks[i]->duedate.day, 
-                      pending_tasks[i]->duedate.month, 
-                      pending_tasks[i]->duedate.year);
-            } else {
-                fprintf(file, "Due Date: Not Set\n");
-            }
-            fprintf(file, "-------------------------\n");
-            pending_count++;
-            total_exported++;
-        }
-    } else {
-        fprintf(file, "No pending tasks.\n");
-    }
-
-    // --- OVERDUE TASKS SECTION ---
-    fprintf(file, "\n===== OVERDUE TASKS =====\n");
     
-    // Create arrays to store tasks for sorting
-    task* overdue_tasks[200]; // Assuming max 200 overdue tasks
+    // Count completed tasks
+    stacknode* node = stack->top;
+    while (node) {
+        completed_count++;
+        node = node->next;
+    }
+    
+    // Write summary at the top (like simplified view)
+    fprintf(file, "SUMMARY: Overdue: %d | Pending: %d | Completed: %d\n", 
+            overdue_count, pending_count, completed_count);
+    fprintf(file, "PRIORITIES: High: %d | Medium: %d | Low: %d\n\n", 
+            high_count, medium_count, low_count);
+    
+    // Create arrays for tasks by status and priority for sorting
+    task* overdue_tasks[200];  // For overdue tasks
+    task* priority_tasks[3][200]; // For pending tasks by priority (1-3)
     int overdue_tasks_count = 0;
-
-    // Collect all overdue tasks
+    int priority_tasks_count[3] = {0};
+    
+    // Collect tasks by status and priority
     current = head;
     while (current) {
-        if (!current->completed && current->status == OVERDUE) {
-            overdue_tasks[overdue_tasks_count++] = current;
+        if (!current->completed) {
+            if (current->status == OVERDUE) {
+                overdue_tasks[overdue_tasks_count++] = current;
+            } else {
+                int priority_idx = current->priority - 1;
+                if (priority_idx >= 0 && priority_idx < 3) {
+                    priority_tasks[priority_idx][priority_tasks_count[priority_idx]++] = current;
+                }
+            }
         }
         current = current->next;
     }
-
-    // Sort overdue tasks by due date (most overdue first)
+    
+    // Sort overdue tasks by due date
     for (int i = 0; i < overdue_tasks_count - 1; i++) {
         for (int j = 0; j < overdue_tasks_count - i - 1; j++) {
-            if (overdue_tasks[j]->due_date_set && 
-                overdue_tasks[j+1]->due_date_set && 
-                compareDates(overdue_tasks[j]->duedate, overdue_tasks[j+1]->duedate) > 0) {
-                // Swap
-                task* temp = overdue_tasks[j];
-                overdue_tasks[j] = overdue_tasks[j+1];
-                overdue_tasks[j+1] = temp;
+            if (overdue_tasks[j]->due_date_set && overdue_tasks[j+1]->due_date_set) {
+                if (compareDates(overdue_tasks[j]->duedate, overdue_tasks[j+1]->duedate) > 0) {
+                    // Swap
+                    task* temp = overdue_tasks[j];
+                    overdue_tasks[j] = overdue_tasks[j+1];
+                    overdue_tasks[j+1] = temp;
+                }
             }
         }
     }
-
-    // Export overdue tasks sorted by due date
-    if (overdue_tasks_count > 0) {
-        fprintf(file, "\n--- Sorted by Due Date (Most Overdue First) ---\n");
-        
-        for (int i = 0; i < overdue_tasks_count; i++) {
-            fprintf(file, "Task: %s\n", overdue_tasks[i]->name);
-            fprintf(file, "Description: %s\n", overdue_tasks[i]->description);
-            fprintf(file, "Priority: %d (%s)\n", overdue_tasks[i]->priority, 
-                  (overdue_tasks[i]->priority == 1) ? "High" : 
-                  (overdue_tasks[i]->priority == 2) ? "Medium" : "Low");
-            fprintf(file, "Status: OVERDUE\n");
-            
-            if (overdue_tasks[i]->due_date_set) {
-                fprintf(file, "Due Date: %02d/%02d/%04d (LATE)\n",
-                      overdue_tasks[i]->duedate.day, 
-                      overdue_tasks[i]->duedate.month, 
-                      overdue_tasks[i]->duedate.year);
-            } else {
-                fprintf(file, "Due Date: Not Set\n");
+    
+    // Sort each priority group by due date
+    for (int p = 0; p < 3; p++) {
+        for (int i = 0; i < priority_tasks_count[p] - 1; i++) {
+            for (int j = 0; j < priority_tasks_count[p] - i - 1; j++) {
+                // If first task has no due date or second has earlier due date
+                if (!priority_tasks[p][j]->due_date_set && priority_tasks[p][j+1]->due_date_set) {
+                    // Swap (tasks without due dates go to the end)
+                    task* temp = priority_tasks[p][j];
+                    priority_tasks[p][j] = priority_tasks[p][j+1];
+                    priority_tasks[p][j+1] = temp;
+                }
+                // Both have due date, compare them
+                else if (priority_tasks[p][j]->due_date_set && priority_tasks[p][j+1]->due_date_set) {
+                    if (compareDates(priority_tasks[p][j]->duedate, priority_tasks[p][j+1]->duedate) > 0) {
+                        // Swap
+                        task* temp = priority_tasks[p][j];
+                        priority_tasks[p][j] = priority_tasks[p][j+1];
+                        priority_tasks[p][j+1] = temp;
+                    }
+                }
             }
-            fprintf(file, "-------------------------\n");
-            overdue_count++;
+        }
+    }
+    
+    // Write table header
+    fprintf(file, "%-3s %-25s %-10s %-15s %-10s %-20s\n", "#", "Name", "Priority", "Due Date", "Status", "Tags");
+    fprintf(file, "--------------------------------------------------------------------------------\n");
+    
+    // Export overdue tasks first
+    int count = 1;
+    for (int i = 0; i < overdue_tasks_count; i++) {
+        task* t = overdue_tasks[i];
+        
+        char date_str[15] = "Not Set";
+        if (t->due_date_set) {
+            sprintf(date_str, "%02d/%02d/%04d", 
+                   t->duedate.day, t->duedate.month, t->duedate.year);
+        }
+        
+        char priority_str[10];
+        switch(t->priority) {
+            case 1: strcpy(priority_str, "High"); break;
+            case 2: strcpy(priority_str, "Medium"); break;
+            case 3: strcpy(priority_str, "Low"); break;
+            default: strcpy(priority_str, "Unknown");
+        }
+        
+        // Collect tags into a single string
+        char tags_str[100] = "";
+        for (int j = 0; j < t->tag_count; j++) {
+            if (j > 0) strcat(tags_str, ", ");
+            strcat(tags_str, t->tags[j]);
+        }
+        
+        fprintf(file, "%-3d %-25s %-10s %-15s %-10s %-20s\n", 
+               count++, t->name, priority_str, date_str, "OVERDUE", tags_str);
+        
+        total_exported++;
+    }
+    
+    // Export pending tasks by priority
+    for (int p = 0; p < 3; p++) {
+        for (int i = 0; i < priority_tasks_count[p]; i++) {
+            task* t = priority_tasks[p][i];
+            
+            char date_str[15] = "Not Set";
+            if (t->due_date_set) {
+                sprintf(date_str, "%02d/%02d/%04d", 
+                       t->duedate.day, t->duedate.month, t->duedate.year);
+            }
+            
+            char priority_str[10];
+            switch(t->priority) {
+                case 1: strcpy(priority_str, "High"); break;
+                case 2: strcpy(priority_str, "Medium"); break;
+                case 3: strcpy(priority_str, "Low"); break;
+                default: strcpy(priority_str, "Unknown");
+            }
+            
+            // Collect tags into a single string
+            char tags_str[100] = "";
+            for (int j = 0; j < t->tag_count; j++) {
+                if (j > 0) strcat(tags_str, ", ");
+                strcat(tags_str, t->tags[j]);
+            }
+            
+            fprintf(file, "%-3d %-25s %-10s %-15s %-10s %-20s\n", 
+                   count++, t->name, priority_str, date_str, "Pending", tags_str);
+            
             total_exported++;
         }
-    } else {
-        fprintf(file, "No overdue tasks.\n");
     }
-
-    // --- COMPLETED TASKS SECTION ---
+    
+    // Separate section for completed tasks
     fprintf(file, "\n===== COMPLETED TASKS =====\n");
-
-    // Create array to store completed tasks for sorting
-    task* completed_tasks[200]; // Assuming max 200 completed tasks
+    fprintf(file, "%-3s %-25s %-10s %-15s %-20s\n", "#", "Name", "Priority", "Due Date", "Tags");
+    fprintf(file, "--------------------------------------------------------------------------------\n");
+    
+    // Collect completed tasks from stack
+    task* completed_tasks[200];
     int completed_tasks_count = 0;
-
-    // Collect all completed tasks from the stack
-    stacknode* node = stack->top;
+    
+    node = stack->top;
     while (node) {
         if (node->task_data) {
             completed_tasks[completed_tasks_count++] = node->task_data;
         }
         node = node->next;
     }
-
-    // Sort completed tasks by due date
-    for (int i = 0; i < completed_tasks_count - 1; i++) {
-        for (int j = 0; j < completed_tasks_count - i - 1; j++) {
-            // Skip if either task has no due date
-            if (!completed_tasks[j]->due_date_set || !completed_tasks[j+1]->due_date_set) {
-                continue;
-            }
-            
-            if (compareDates(completed_tasks[j]->duedate, completed_tasks[j+1]->duedate) > 0) {
-                // Swap
-                task* temp = completed_tasks[j];
-                completed_tasks[j] = completed_tasks[j+1];
-                completed_tasks[j+1] = temp;
-            }
-        }
-    }
-
-    // Export completed tasks sorted by due date
-    if (completed_tasks_count > 0) {
-        fprintf(file, "\n--- Most Recent Completions First ---\n");
+    
+    // Export completed tasks
+    count = 1;
+    for (int i = 0; i < completed_tasks_count; i++) {
+        task* t = completed_tasks[i];
         
-        // The stack is already ordered by completion time (most recent at top)
-        // So we can just export in the order of the stack
-        for (int i = 0; i < completed_tasks_count; i++) {
-            fprintf(file, "Task: %s\n", completed_tasks[i]->name);
-            fprintf(file, "Description: %s\n", completed_tasks[i]->description);
-            fprintf(file, "Priority: %d (%s)\n", completed_tasks[i]->priority, 
-                  (completed_tasks[i]->priority == 1) ? "High" : 
-                  (completed_tasks[i]->priority == 2) ? "Medium" : "Low");
-            fprintf(file, "Status: Completed\n");
-            
-            if (completed_tasks[i]->due_date_set) {
-                fprintf(file, "Due Date: %02d/%02d/%04d\n",
-                      completed_tasks[i]->duedate.day, 
-                      completed_tasks[i]->duedate.month, 
-                      completed_tasks[i]->duedate.year);
-            } else {
-                fprintf(file, "Due Date: Not Set\n");
-            }
-            fprintf(file, "-------------------------\n");
-            completed_count++;
-            total_exported++;
+        char date_str[15] = "Not Set";
+        if (t->due_date_set) {
+            sprintf(date_str, "%02d/%02d/%04d", 
+                   t->duedate.day, t->duedate.month, t->duedate.year);
         }
-    } else {
-        fprintf(file, "No completed tasks.\n");
+        
+        char priority_str[10];
+        switch(t->priority) {
+            case 1: strcpy(priority_str, "High"); break;
+            case 2: strcpy(priority_str, "Medium"); break;
+            case 3: strcpy(priority_str, "Low"); break;
+            default: strcpy(priority_str, "Unknown");
+        }
+        
+        // Collect tags into a single string
+        char tags_str[100] = "";
+        for (int j = 0; j < t->tag_count; j++) {
+            if (j > 0) strcat(tags_str, ", ");
+            strcat(tags_str, t->tags[j]);
+        }
+        
+        fprintf(file, "%-3d %-25s %-10s %-15s %-20s\n", 
+               count++, t->name, priority_str, date_str, tags_str);
+        
+        total_exported++;
     }
-
-    // Add a summary at the end
-    fprintf(file, "\n===== SUMMARY =====\n");
+    
+    // Add a more detailed summary at the end
+    fprintf(file, "\n===== EXPORT SUMMARY =====\n");
     fprintf(file, "Total Tasks Exported: %d\n", total_exported);
     fprintf(file, "Pending Tasks: %d\n", pending_count);
     fprintf(file, "Overdue Tasks: %d\n", overdue_count);
     fprintf(file, "Completed Tasks: %d\n", completed_count);
+    fprintf(file, "High Priority: %d\n", high_count);
+    fprintf(file, "Medium Priority: %d\n", medium_count);
+    fprintf(file, "Low Priority: %d\n", low_count);
 
     fclose(file);
     printf("Tasks exported to %s\n", filename);
-    printf("Summary: %d pending, %d overdue, %d completed (Total Exported: %d)\n",
-           pending_count, overdue_count, completed_count, total_exported);
+    printf("Total %d tasks exported (%d pending, %d overdue, %d completed)\n",
+           total_exported, pending_count, overdue_count, completed_count);
 }
 
 
