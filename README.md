@@ -81,7 +81,7 @@ It’s designed to improve productivity, reduce stress, and provide an organized
 
 first
 ```bash
-gcc main.c task_management.c searchandstat.c scheduler.c fileio.c
+gcc -o todolist main.c task_management.c searchandstat.c scheduler.c fileio.c
 ```
 then 
 ```bash
