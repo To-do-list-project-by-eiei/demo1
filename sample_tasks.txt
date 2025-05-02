@@ -1,0 +1,50 @@
+Quantum Computing Course,Register for online quantum algorithms class,2,15/07/2025
+Dental Appointment,Schedule routine dental checkup,2,10/04/2025
+Passport Renewal,Submit passport renewal application,1,30/05/2025
+Wedding Gift Purchase,Buy present for cousin's wedding,2,20/06/2025
+Car Maintenance,Take car for 50000 mile service,1,08/05/2025
+Gym Membership Renewal,Renew annual fitness center membership,3,31/12/2025
+Piano Recital Practice,Prepare pieces for spring recital,1,25/04/2025
+Gardening Project,Plant summer vegetables in backyard,3,15/03/2025
+Pet Vaccination,Schedule annual shots for dog,2,12/06/2025
+Home Insurance Review,Compare and renew home insurance policy,1,28/07/2025
+Photography Contest,Submit nature photos for competition,2,05/08/2025
+Cooking Class Registration,Sign up for Italian cuisine workshop,3,10/09/2025
+Volunteer Work Signup,Register for community garden project,2,22/04/2025
+Language Exam Prep,Study for JLPT N3 Japanese test,1,05/12/2025
+Apartment Inspection,Prepare for annual landlord inspection,2,15/10/2025
+Book Club Meeting,Read and discuss "Dune" for club,3,30/05/2025
+Driver's License Renewal,Renew expiring driver's license,1,18/08/2025
+Museum Exhibition Visit,See Van Gogh exhibit before it closes,2,31/07/2025
+Patent Application,Submit provisional patent paperwork,1,20/09/2025
+Yoga Workshop,Attend advanced yoga techniques seminar,3,14/06/2025
+Startup Pitch Deck,Create investor presentation slides,1,02/07/2025
+Annual Physical Exam,Schedule yearly health checkup,2,01/11/2025
+Charity Marathon Training,Begin 16-week marathon training program,2,15/02/2025
+Mortgage Refinancing,Research and apply for better rates,1,30/06/2025
+Wedding Anniversary Plans,Book restaurant for 10th anniversary,2,12/08/2025
+Podcast Recording,Record episode on machine learning trends,2,18/05/2025
+House Painting Project,Get quotes and schedule exterior painting,3,20/07/2025
+Investment Portfolio Review,Meet with financial advisor,1,25/09/2025
+Coding Bootcamp Application,Apply for full-stack development course,1,10/03/2025
+Neighborhood BBQ Planning,Organize annual block party event,2,04/07/2025
+Science Fair Mentoring,Volunteer as student project mentor,3,15/01/2025
+Travel Visa Application,Apply for tourist visa to Japan,1,28/04/2025
+Kitchen Renovation Planning,Meet with contractors for quotes,2,05/06/2025
+Marathon Registration,Sign up for city marathon event,2,31/03/2025
+Art Gallery Opening,Attend friend's photography exhibition,3,22/05/2025
+Stock Options Exercise,Decide on vesting stock options,1,15/12/2025
+Bike Maintenance Workshop,Learn basic bicycle repair skills,3,08/04/2025
+Community Theater Audition,Prepare monologue for local play,2,17/05/2025
+Cloud Certification Study,Prepare for Azure Developer exam,1,20/10/2025
+Retirement Planning Session,Review 401k allocation with advisor,2,30/11/2025
+Food Truck Festival,Organize vendor permits for event,2,12/07/2025
+Genealogy Research Project,Visit county records for family history,3,25/08/2025
+Sailing Lessons Enrollment,Register for beginner sailing course,2,01/05/2025
+Tax Deduction Documentation,Organize receipts for tax season,1,31/03/2025
+Wildlife Photography Trip,Book safari tour in Kenya,2,15/11/2025
+Home Energy Audit,Schedule efficiency assessment,3,20/09/2025
+Beekeeping Course,Start urban beekeeping certification,2,10/04/2025
+Estate Planning Meeting,Update will with attorney,1,05/10/2025
+Scuba Certification,Complete open water diving course,2,30/06/2025
+Local Election Voting,Research candidates and vote,1,02/11/2025
