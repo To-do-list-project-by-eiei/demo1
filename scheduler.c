@@ -1,24 +1,44 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>  // Add this line to fix strcpy error
+#include <string.h>  
 #include <time.h>
 #include "scheduler.h"
 #include "task_management.h"
 
-
+/*
+compareDates() - Compares two dates
+ - Time: O(1), Space: O(1)
+ - Sample Case:
+    Input: 
+      d1 = {10, 5, 2025}
+      d2 = {15, 5, 2025}
+    Output: -5 (d1 is earlier than d2)
+ */
 int compareDates(date d1, date d2) {
     if (d1.year != d2.year) return d1.year - d2.year;
     if (d1.month != d2.month) return d1.month - d2.month;
     return d1.day - d2.day;
 }
 
+/*
+getToday() - Gets current system date
+ - Time: O(1), Space: O(1)
+ - Example: getToday() -> returns {2, 5, 2025} (current date)
+ */
 date getToday() {
     time_t now = time(NULL);
     struct tm *t = localtime(&now);
-    date today = {t->tm_mday, t->tm_mon + 1, t->tm_year + 1900}; // Date structure
-    return today;  // Ensure it returns 'date'
+    date today = {t->tm_mday, t->tm_mon + 1, t->tm_year + 1900}; 
+    return today;  
 }
 
+/*
+isValidDate() - Validates date format
+ - Time: O(1), Space: O(1)
+ - Sample Case:
+    Input: day=31, month=2, year=2025
+    Output: 0 (invalid - February doesn't have 31 days)
+ */
 int isValidDate(int day, int month, int year) {
     if (year < 1900 || month < 1 || month > 12 || day < 1)
         return 0;
@@ -33,6 +53,11 @@ int isValidDate(int day, int month, int year) {
     return day <= daysInMonth[month];
 }
 
+/*
+setDueDate() - Sets due date for a task
+ - Time: O(1), Space: O(1)
+ - Example: setDueDate(task_ptr, 10, 5, 2025) -> sets task due date
+ */
 void setDueDate(task* t, int day, int month, int year) {
     if (t) {
         t->duedate.day = day;
@@ -42,17 +67,13 @@ void setDueDate(task* t, int day, int month, int year) {
     }
 }
 
-// void simulateDayChange(task* head, date today) {
-//     printf("\n--- Simulating Day Change ---\n");
-//     while (head) {
-//         if (!head->completed && head->due_date_set && compareDates(today, head->duedate) > 0) {
-//             printf("⚠️ Task overdue: %s (was due %02d/%02d/%04d)\n",
-//                    head->name, head->duedate.day, head->duedate.month, head->duedate.year);
-//         }
-//         head = head->next;
-//     }
-// }
 
+
+/*
+adjustPriority() - Upgrades overdue tasks to high priority
+ - Time: O(n), Space: O(1)
+ - Example: adjustPriority(tasks, today) -> overdue tasks become priority 1
+ */
 void adjustPriority(task* head, date today) {
     while (head) {
         if (!head->completed && head->due_date_set && compareDates(today, head->duedate) > 0 && head->priority != 1) {
@@ -62,7 +83,16 @@ void adjustPriority(task* head, date today) {
         head = head->next;
     }
 }
-void clearcompletedtask(stacknode** top_ptr) { // Renamed parameter for clarity
+
+/*
+clearcompletedtask() - Removes all completed tasks
+ - Time: O(n), Space: O(1)
+ - Sample Case:
+    Before: Stack with 3 completed tasks
+    After: Empty stack
+    Output: "All completed tasks cleared."
+ */
+void clearcompletedtask(stacknode** top_ptr) { 
     stacknode* current = *top_ptr;
     stacknode* temp;
 
@@ -76,18 +106,24 @@ void clearcompletedtask(stacknode** top_ptr) { // Renamed parameter for clarity
         temp = current;
         current = current->next;
 
-        // Free the dynamically allocated task data FIRST
-        if (temp->task_data) { // Good practice to check
+        // Free the dynamically allocated task data first
+        if (temp->task_data) { 
             free(temp->task_data);
         }
-        // THEN free the stack node itself
+        // free the stack node itself
         free(temp);
     }
 
-    *top_ptr = NULL; // Set the stack's top pointer to NULL via the double pointer
+    *top_ptr = NULL; // Set the top pointer to NULL
     printf("All completed tasks cleared.\n");
 }
 
+
+/*
+updateTaskStatuses() - Updates task status based on due date
+ - Time: O(n), Space: O(1)
+ - Example: updateTaskStatuses(tasks, today) -> marks overdue tasks
+ */
 void updateTaskStatuses(task* head, date today) {
     task* current = head;
     while (current) {
@@ -105,7 +141,15 @@ void updateTaskStatuses(task* head, date today) {
     }
 }
 
-// Improved auto-priority adjustment based on due dates
+/*
+autoPriorityAdjust() - Auto-adjusts priority based on due date
+ - Time: O(n), Space: O(1)
+ - Sample Case:
+    Input: Task "Essay" with Medium priority, due tomorrow
+    Output:
+      "Priority for 'Essay' auto-adjusted to HIGH"
+      Task priority changed from 2 to 1
+ */
 void autoPriorityAdjust(task* head, date today) {
     task* current = head;
     while (current) {
@@ -140,14 +184,22 @@ void autoPriorityAdjust(task* head, date today) {
     }
 }
 
+/*
+getDaysBetween() - Calculates days between two dates
+ - Time: O(1), Space: O(1)
+ - Sample Case:
+    Input:
+      d1 = {1, 5, 2025}
+      d2 = {5, 5, 2025}
+    Output: 4 (days difference)
+ */
 int getDaysBetween(date d1, date d2) {
-    // This is a simplified calculation and doesn't account for all edge cases
-    // For a more accurate calculation, convert dates to absolute days or use a library
+    // Check if dates are valid
     
     // Approximate days in each month (ignoring leap years)
     const int daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     
-    // Convert dates to days since year 0 (approximate)
+    // Convert dates to days since year 0 
     int days1 = d1.year * 365 + d1.day;
     int days2 = d2.year * 365 + d2.day;
     
@@ -155,17 +207,20 @@ int getDaysBetween(date d1, date d2) {
     for (int i = 1; i < d1.month; i++) days1 += daysInMonth[i];
     for (int i = 1; i < d2.month; i++) days2 += daysInMonth[i];
     
-    // Add leap years (approximate)
+    // Add leap years 
     days1 += d1.year / 4;
     days2 += d2.year / 4;
     
     return days2 - days1;
 }
 
-
+/*
+isDateSoon() - Checks if date is within threshold days
+ - Time: O(1), Space: O(1)
+ - Example: isDateSoon(today, duedate, 2) -> true if due within 2 days
+ */
 int isDateSoon(date today, date duedate, int daysThreshold) {
-    // Simple implementation - not accounting for month/year boundaries
-    // For a more accurate implementation, convert both dates to days since epoch
+    // Check if due date is valid
     
     // If years are different
     if (duedate.year > today.year) {
@@ -195,8 +250,22 @@ int isDateSoon(date today, date duedate, int daysThreshold) {
     return (duedate.day - today.day) <= daysThreshold && (duedate.day - today.day) >= 0;
 }
 
-// Simplified simulateDayChange function without Unicode
-// Table format simulateDayChange function
+/*
+simulateDayChange() - Changes system date for testing
+ - Time: O(n), Space: O(n)
+ - Sample Case:
+    Input: New date: 15 05 2025
+    Output:
+      Date changed to: 15/05/2025
+      
+      === Task Status Overview ===
+      [OVERDUE] Assignment - was due on 10/05/2025
+      [URGENT] Presentation - due on 17/05/2025
+      
+      Summary:
+      Overdue tasks: 1
+      Urgent tasks: 1
+ */
 void simulateDayChange(task* head, date* currentDate) {
     date newDate;
     
@@ -206,7 +275,7 @@ void simulateDayChange(task* head, date* currentDate) {
     
     char buffer[20];
     
-    // Use fgets and sscanf for safer input
+    
     if (fgets(buffer, sizeof(buffer), stdin) == NULL || 
         sscanf(buffer, "%d %d %d", &newDate.day, &newDate.month, &newDate.year) != 3) {
         printf("Invalid date format. Simulation cancelled.\n");
@@ -223,7 +292,7 @@ void simulateDayChange(task* head, date* currentDate) {
     *currentDate = newDate;
     printf("\nDate changed to: %02d/%02d/%04d\n", currentDate->day, currentDate->month, currentDate->year);
     
-    // Update task statuses based on new date
+    
     updateTaskStatuses(head, newDate);
     
     // Auto-adjust priorities based on due dates
@@ -254,14 +323,14 @@ void simulateDayChange(task* head, date* currentDate) {
         current = current->next;
     }
     
-    // Display tasks in table format
+    
     printf("\n=== Task Status Overview ===\n");
-    printf("%-3s %-25s %-10s %-15s %-10s\n", "#", "Task Name", "Priority", "Due Date", "Status");
-    printf("---------------------------------------------------------------\n");
+    printf("%-5s %-25s %-10s %-15s %-10s\n", "#", "Task Name", "Priority", "Due Date", "Status");
+    printf("---------------------------------------------------------------------------------\n");
     
     int count = 1;
     
-    // First show overdue tasks
+    // show overdue tasks
     if (overdue_count > 0) {
         printf("\n--- OVERDUE TASKS ---\n");
         for (int i = 0; i < overdue_count; i++) {
@@ -273,7 +342,7 @@ void simulateDayChange(task* head, date* currentDate) {
                 default: strcpy(priority_str, "Unknown");
             }
             
-            printf("%-3d %-25s %-10s %02d/%02d/%04d OVERDUE\n", 
+            printf("%-5d %-25s %-10s %02d/%02d/%04d OVERDUE\n", 
                    count++, 
                    overdue_tasks[i]->name, 
                    priority_str,
@@ -283,7 +352,7 @@ void simulateDayChange(task* head, date* currentDate) {
         }
     }
     
-    // Then show urgent tasks
+    // show urgent tasks
     if (urgent_count > 0) {
         printf("\n--- URGENT TASKS (Due within 2 days) ---\n");
         for (int i = 0; i < urgent_count; i++) {
@@ -295,7 +364,7 @@ void simulateDayChange(task* head, date* currentDate) {
                 default: strcpy(priority_str, "Unknown");
             }
             
-            printf("%-3d %-25s %-10s %02d/%02d/%04d URGENT\n", 
+            printf("%-5d %-25s %-10s %02d/%02d/%04d URGENT\n", 
                    count++, 
                    urgent_tasks[i]->name, 
                    priority_str,
@@ -323,17 +392,20 @@ void simulateDayChange(task* head, date* currentDate) {
     
     printf("\nDay change simulation completed.\n");
 }
-// int isValidDate(int day, int month, int year) {
-//     if (year < 1900 || month < 1 || month > 12 || day < 1)
-//         return 0;
-//     int daysInMonth[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
-//     if (month == 2 && ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)))
-//         daysInMonth[2] = 29;
-//     return day <= daysInMonth[month];
-// }
 
+
+/*
+isDateWithinDays() - Checks if date within range
+ - Time: O(1), Space: O(1)
+ - Sample Case:
+    Input:
+      today = {1, 5, 2025}
+      check_date = {5, 5, 2025}
+      days = 7
+    Output: 1 (date is within 7 days)
+ */
 int isDateWithinDays(date today, date check_date, int days) {
-    // Calculate total days for both dates (very simplified calculation)
+    // Calculate total days for both dates 
     int today_days = today.year * 365 + today.month * 30 + today.day;
     int check_days = check_date.year * 365 + check_date.month * 30 + check_date.day;
     
