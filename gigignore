@@ -1,0 +1,34 @@
+# Compiled object files
+*.o
+
+# Compiled executable
+todolist
+todolist.exe
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build directories
+build/
+Debug/
+Release/
+
+# Exported task files (if you want to exclude them)
+# tasks_export.txt
+
+# macOS specific
+.DS_Store
+
+# Windows specific
+Thumbs.db
+
+# Linux specific
+*.out
