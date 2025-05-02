@@ -19,7 +19,7 @@ void pause() {
 int checkForLoops(tasklist* list) {
     if (!list->head) return 0;  // Empty list has no loops
     
-    // Floyd's Cycle-Finding Algorithm (Tortoise and Hare)
+    
     task* slow = list->head;
     task* fast = list->head->next;
     
@@ -171,8 +171,7 @@ int main() {
                 break;
             }
             case 7: {
-                char keyword[100];
-                searchTasks(tasks.head, &doneStack, keyword);
+                searchTasks(tasks.head, &doneStack, NULL);  // Pass NULL as keyword
                 pause();
                 break;
             }
@@ -221,7 +220,7 @@ int main() {
                 pause();
                 break;
             case 14:
-                view_time_summary(&tasks, currentDate);  // Combined time summary function
+                view_time_summary(&tasks, currentDate);  
                 pause();
                 break;
             case 15: {
