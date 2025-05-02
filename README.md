@@ -52,6 +52,9 @@ It’s designed to improve productivity, reduce stress, and provide an organized
 | **Linked List** | Store tasks dynamically |
 | **Stack** | Track completed tasks (Undo / Clear Stack) |
 | **Priority Queue** | Sort tasks by urgency |
+| **Sorting Algorithm (Bubble Sort)** | For organizing tasks by date and priority|
+## Data Structures and Algorithms Used
+
 
 
 ---
