@@ -1,8 +1,8 @@
 #ifndef TASK_MANAGEMENT_H
 #define TASK_MANAGEMENT_H
 
-// Only include scheduler.h
-#include "scheduler.h" // For date and TaskStatus types
+
+#include "scheduler.h" 
 
 // Constants for tags
 #define MAX_TAGS 5
@@ -57,7 +57,7 @@ task* dequeue(taskqueue* q);
 int isQueueEmpty(taskqueue* q);
 void freeQueue(taskqueue* q);
 
-// Basic task management function prototypes
+
 void sortTasksByDueDate(task* tasks[], int count);
 void add(tasklist* list);
 int isTaskNameDuplicate(tasklist* list, const char* name);
@@ -69,7 +69,7 @@ void deleteTask(tasklist* list, const char* name);
 void freeTasks(tasklist* list);
 void freeStack(completedstack* stack);
 
-// New feature function prototypes
+
 void simplified_view(tasklist* list, date today);
 void view_weekly_summary(tasklist* list, date today);
 void view_monthly_summary(tasklist* list, date today);
@@ -78,10 +78,10 @@ void view_by_tag(tasklist* list, const char* tag);
 void sort_by_tag(tasklist* list);
 void text_converter(const char* input_text, tasklist* list);
 
-// Combined view functions
+
 void view_combined(tasklist* list, date today);
 void view_time_summary(tasklist* list, date today);
 
-// Do NOT declare functions from searchandstat.h here
 
-#endif // TASK_MANAGEMENT_H
+
+#endif 
