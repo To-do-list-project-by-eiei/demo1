@@ -1,0 +1,100 @@
+Ancient Overdue Task,Complete project from last semester,1,15/09/2024
+Long-term Research,Finish doctoral thesis chapter,2,30/06/2026
+Summer Internship App,Apply for tech internship programs,1,15/01/2025
+Holiday Project,Build personal portfolio website,3,25/12/2025
+Conference Paper,Submit paper to ACM conference,1,10/03/2025
+Tax Documentation,Prepare tax return documents,1,10/04/2025
+Birthday Present,Buy gift for friend's birthday,2,22/05/2025
+Yearly Health Checkup,Schedule annual medical examination,2,01/07/2025
+Fall Semester Prep,Order textbooks for fall classes,3,15/08/2025
+New Year Resolution,Start fitness program planning,3,01/01/2026
+Graduation Thesis,Complete final thesis draft,1,30/04/2026
+Study Abroad Application,Submit exchange program documents,1,28/02/2025
+Career Fair Registration,Sign up for spring career event,2,05/03/2025
+Summer Course Enrollment,Register for summer calculus class,2,20/04/2025
+Apartment Lease Renewal,Decide on lease extension,1,31/05/2025
+Scholarship Application,Apply for academic merit scholarship,1,15/11/2025
+Winter Break Plans,Book flights for holiday travel,2,01/12/2025
+Spring Cleaning,Organize study materials and notes,3,20/03/2025
+Halloween Event,Plan computer science club party,3,25/10/2025
+Valentine's Day Card,Design greeting card for partner,2,10/02/2025
+Spring Break Trip,Reserve hotel for vacation,1,01/03/2025
+Final Exam Prep,Create comprehensive study guide,1,10/12/2025
+Summer Research Grant,Submit research proposal,1,30/03/2025
+Back to School Shopping,Buy supplies for new semester,2,20/08/2025
+Thanksgiving Plans,Coordinate family dinner arrangements,2,20/11/2025
+Easter Holiday Project,Complete home automation system,3,10/04/2025
+Memorial Day Event,Organize community service project,2,25/05/2025
+Labor Day Weekend,Plan camping trip with friends,3,01/09/2025
+Fourth of July Party,Prepare BBQ menu and decorations,2,01/07/2025
+Father's Day Gift,Order custom photo album,2,10/06/2025
+Mother's Day Brunch,Make restaurant reservation,1,05/05/2025
+Earth Day Initiative,Launch recycling awareness campaign,2,18/04/2025
+Black Friday Shopping,Research tech deals and discounts,3,25/11/2025
+Cyber Monday Deals,Compare online course prices,3,28/11/2025
+Alumni Reunion,RSVP for college reunion event,2,15/06/2025
+Professional Certification,Complete AWS certification exam,1,30/09/2025
+Research Publication,Submit journal article revision,1,15/07/2025
+International Conference,Register for global tech summit,2,10/10/2025
+Study Group Formation,Organize physics study sessions,2,05/09/2025
+Programming Books Return,Return overdue programming books,3,03/05/2025
+Workshop Registration,Sign up for machine learning workshop,2,20/05/2025
+Hackathon Preparation,Form team for coding competition,1,08/06/2025
+Portfolio Update,Add recent projects to GitHub,2,12/05/2025
+Internship Report,Complete summer internship summary,1,31/08/2025
+Club Elections,Submit candidacy for president role,1,15/09/2025
+Course Evaluation,Complete professor feedback forms,3,05/12/2025
+Research Symposium,Prepare poster presentation,1,22/04/2025
+Academic Advising,Schedule meeting with advisor,2,10/03/2025
+Co-op Application,Apply for engineering co-op position,1,05/02/2025
+Senior Project Demo,Present capstone project results,1,25/04/2026
+Overdue Assignment,Complete Linear Algebra homework from last week,1,15/04/2025
+Urgent Presentation,Prepare slides for AI project presentation tomorrow,1,03/05/2025
+Chemistry Lab Report,Write up lab results from yesterday's experiment,2,07/05/2025
+Study for Finals,Review all chapters for upcoming Computer Science final,1,20/05/2025
+Team Meeting Notes,Document action items from group project meeting,3,04/05/2025
+Research Paper Draft,Complete first draft of Environmental Science paper,2,12/05/2025
+Code Review Preparation,Review codebase for tomorrow's peer review session,1,03/05/2025
+Calculus Book Return,Return borrowed calculus textbook to library,3,05/05/2025
+Database Project,Design ER diagram for customer management system,1,09/05/2025
+Weekly Math Quiz,Prepare for weekly differential equations quiz,2,06/05/2025
+Internship Application,Submit application for summer software developer position,1,10/05/2025
+Art History Essay,Write 2000-word essay on Renaissance painters,2,15/05/2025
+Physics Homework Set,Complete problem set on quantum mechanics,1,08/05/2025
+Club Event Planning,Organize agenda for programming club meeting,3,11/05/2025
+Mobile App Mockup,Create wireframes for fitness tracking application,2,13/05/2025
+Network Security Lab,Configure firewall settings for lab exercise,1,06/05/2025
+Statistical Analysis,Analyze survey data for research project,2,14/05/2025
+Biology Field Trip Report,Summarize findings from ecological field study,2,16/05/2025
+Midterm Study Group,Prepare topics for microeconomics study session,3,17/05/2025
+Software Testing,Write unit tests for sorting algorithm implementation,1,08/05/2025
+Language Practice,Complete French conversation exercises,3,09/05/2025
+Career Fair Prep,Update resume and portfolio for IT career fair,1,18/05/2025
+Algorithm Assignment,Implement Dijkstra's shortest path algorithm,1,07/05/2025
+Ethics Case Study,Analyze corporate responsibility case for discussion,2,19/05/2025
+Digital Marketing Plan,Create social media strategy for startup project,3,21/05/2025
+Robotics Workshop,Build line-following robot prototype,2,22/05/2025
+Data Visualization,Create graphs for machine learning results,2,10/05/2025
+Music Theory Quiz,Study chord progressions for tomorrow's quiz,1,03/05/2025
+Chemistry Group Project,Collaborate on molecular modeling presentation,2,23/05/2025
+Web Development Task,Debug JavaScript issues on e-commerce site,1,11/05/2025
+Psychology Experiment,Design cognitive psychology experiment protocol,2,24/05/2025
+GIS Mapping Exercise,Create population density map using ArcGIS,2,13/05/2025
+Accounting Ledger,Balance monthly transactions for practice set,1,12/05/2025
+Literature Review,Read assigned chapters of Victorian novels,3,25/05/2025
+Operating Systems Lab,Implement process scheduling algorithm,1,14/05/2025
+Creative Writing Workshop,Write short story draft for peer review,2,26/05/2025
+History Presentation,Prepare timeline of World War II events,2,16/05/2025
+Blockchain Research,Study smart contract implementations,3,27/05/2025
+UI/UX Design Critique,Evaluate user interface of banking applications,2,18/05/2025
+Artificial Intelligence Paper,Research neural network architectures,1,28/05/2025
+Economic Data Analysis,Process GDP statistics for developing nations,2,20/05/2025
+Legal Studies Brief,Summarize landmark court cases for exam,2,29/05/2025
+Geology Lab Work,Identify mineral samples for practical exam,1,15/05/2025
+Film Analysis Essay,Write critique of contemporary cinema techniques,3,30/05/2025
+Architecture Drawing,Complete CAD designs for sustainable building,2,31/05/2025
+Supply Chain Model,Develop optimization model for logistics course,1,17/05/2025
+Cybersecurity Audit,Review system vulnerabilities for IT security class,1,19/05/2025
+Philosophy Debate Prep,Prepare arguments for ethics debate competition,2,01/06/2025
+Engineering Design Project,Finalize mechanical component specifications,1,21/05/2025
+Public Speaking Practice,Rehearse presentation for communications class,3,22/05/2025
