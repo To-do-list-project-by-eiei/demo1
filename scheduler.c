@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>  // Add this line to fix strcpy error
 #include <time.h>
 #include "scheduler.h"
 #include "task_management.h"
+
 
 int compareDates(date d1, date d2) {
     if (d1.year != d2.year) return d1.year - d2.year;
@@ -193,23 +195,33 @@ int isDateSoon(date today, date duedate, int daysThreshold) {
     return (duedate.day - today.day) <= daysThreshold && (duedate.day - today.day) >= 0;
 }
 
+// Simplified simulateDayChange function without Unicode
+// Table format simulateDayChange function
 void simulateDayChange(task* head, date* currentDate) {
     date newDate;
-    printf("\n--- Simulate Day Change ---\n");
-    printf("Current date: %02d/%02d/%04d\n", currentDate->day, currentDate->month, currentDate->year);
+    
+    printf("\n=== Simulate Day Change ===\n");
+    printf("Current date: %02d/%02d/%04d\n\n", currentDate->day, currentDate->month, currentDate->year);
     printf("Enter new date (DD MM YYYY): ");
-    scanf("%d %d %d", &newDate.day, &newDate.month, &newDate.year);
-    getchar(); // Clear input buffer
+    
+    char buffer[20];
+    
+    // Use fgets and sscanf for safer input
+    if (fgets(buffer, sizeof(buffer), stdin) == NULL || 
+        sscanf(buffer, "%d %d %d", &newDate.day, &newDate.month, &newDate.year) != 3) {
+        printf("Invalid date format. Simulation cancelled.\n");
+        return;
+    }
     
     // Validate date
-    if (newDate.day < 1 || newDate.day > 31 || newDate.month < 1 || newDate.month > 12 || newDate.year < 2023) {
+    if (!isValidDate(newDate.day, newDate.month, newDate.year)) {
         printf("Invalid date. Simulation cancelled.\n");
         return;
     }
     
     // Update the current date
     *currentDate = newDate;
-    printf("Date changed to: %02d/%02d/%04d\n", currentDate->day, currentDate->month, currentDate->year);
+    printf("\nDate changed to: %02d/%02d/%04d\n", currentDate->day, currentDate->month, currentDate->year);
     
     // Update task statuses based on new date
     updateTaskStatuses(head, newDate);
@@ -217,34 +229,100 @@ void simulateDayChange(task* head, date* currentDate) {
     // Auto-adjust priorities based on due dates
     autoPriorityAdjust(head, newDate);
     
-    // Check and notify about overdue tasks
-    int overdueCount = 0;
-    int soonCount = 0;
-    task* current = head;
+    // Create arrays to store tasks by status
+    task* overdue_tasks[100];
+    task* urgent_tasks[100];
+    task* normal_tasks[100];
+    int overdue_count = 0;
+    int urgent_count = 0;
+    int normal_count = 0;
     
+    // Categorize tasks
+    task* current = head;
     while (current) {
         if (!current->completed && current->due_date_set) {
             if (compareDates(newDate, current->duedate) > 0) {
-                printf("⚠️ OVERDUE: \"%s\" was due on %02d/%02d/%04d\n", 
-                       current->name, current->duedate.day, current->duedate.month, current->duedate.year);
-                overdueCount++;
+                overdue_tasks[overdue_count++] = current;
             } 
             else if (isDateSoon(newDate, current->duedate, 2)) {
-                printf("⚠️ [!] URGENT: \"%s\" is due soon on %02d/%02d/%04d\n", 
-                       current->name, current->duedate.day, current->duedate.month, current->duedate.year);
-                soonCount++;
+                urgent_tasks[urgent_count++] = current;
+            }
+            else {
+                normal_tasks[normal_count++] = current;
             }
         }
         current = current->next;
     }
     
-    if (overdueCount == 0 && soonCount == 0) {
-        printf("No overdue or urgent tasks found.\n");
-    } else {
-        printf("\nSummary: %d overdue task(s), %d urgent task(s)\n", overdueCount, soonCount);
+    // Display tasks in table format
+    printf("\n=== Task Status Overview ===\n");
+    printf("%-3s %-25s %-10s %-15s %-10s\n", "#", "Task Name", "Priority", "Due Date", "Status");
+    printf("---------------------------------------------------------------\n");
+    
+    int count = 1;
+    
+    // First show overdue tasks
+    if (overdue_count > 0) {
+        printf("\n--- OVERDUE TASKS ---\n");
+        for (int i = 0; i < overdue_count; i++) {
+            char priority_str[10];
+            switch(overdue_tasks[i]->priority) {
+                case 1: strcpy(priority_str, "High"); break;
+                case 2: strcpy(priority_str, "Medium"); break;
+                case 3: strcpy(priority_str, "Low"); break;
+                default: strcpy(priority_str, "Unknown");
+            }
+            
+            printf("%-3d %-25s %-10s %02d/%02d/%04d OVERDUE\n", 
+                   count++, 
+                   overdue_tasks[i]->name, 
+                   priority_str,
+                   overdue_tasks[i]->duedate.day, 
+                   overdue_tasks[i]->duedate.month, 
+                   overdue_tasks[i]->duedate.year);
+        }
     }
+    
+    // Then show urgent tasks
+    if (urgent_count > 0) {
+        printf("\n--- URGENT TASKS (Due within 2 days) ---\n");
+        for (int i = 0; i < urgent_count; i++) {
+            char priority_str[10];
+            switch(urgent_tasks[i]->priority) {
+                case 1: strcpy(priority_str, "High"); break;
+                case 2: strcpy(priority_str, "Medium"); break;
+                case 3: strcpy(priority_str, "Low"); break;
+                default: strcpy(priority_str, "Unknown");
+            }
+            
+            printf("%-3d %-25s %-10s %02d/%02d/%04d URGENT\n", 
+                   count++, 
+                   urgent_tasks[i]->name, 
+                   priority_str,
+                   urgent_tasks[i]->duedate.day, 
+                   urgent_tasks[i]->duedate.month, 
+                   urgent_tasks[i]->duedate.year);
+        }
+    }
+    
+    // Show summary in a clean format
+    printf("\n=== Summary ===\n");
+    printf("+-----------------------+----------+\n");
+    printf("| Status                | Count    |\n");
+    printf("+-----------------------+----------+\n");
+    printf("| OVERDUE Tasks         | %-8d |\n", overdue_count);
+    printf("| URGENT Tasks          | %-8d |\n", urgent_count);
+    printf("| Normal Tasks          | %-8d |\n", normal_count);
+    printf("+-----------------------+----------+\n");
+    printf("| Total Active Tasks    | %-8d |\n", overdue_count + urgent_count + normal_count);
+    printf("+-----------------------+----------+\n");
+    
+    if (overdue_count == 0 && urgent_count == 0) {
+        printf("\nNo overdue or urgent tasks found. All tasks are on schedule.\n");
+    }
+    
+    printf("\nDay change simulation completed.\n");
 }
-
 // int isValidDate(int day, int month, int year) {
 //     if (year < 1900 || month < 1 || month > 12 || day < 1)
 //         return 0;
