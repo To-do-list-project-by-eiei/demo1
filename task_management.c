@@ -5,10 +5,16 @@
 #include <stdbool.h>
 #include "scheduler.h"
 #include "task_management.h"
-#include "searchandstat.h" // This is needed for showStats and show_time_stats
+#include "searchandstat.h" 
 
 
-
+/*
+sortTasksByDueDate() - Bubble sorts tasks by due date
+ - Time: O(n²), Space: O(1)
+ - Sample Case:
+    Input: [Task3(15/05), Task1(10/05), Task2(no date)]
+    Output: [Task1(10/05), Task3(15/05), Task2(no date)]
+ */
 void sortTasksByDueDate(task* tasks[], int count) {
     for (int i = 0; i < count - 1; i++) {
         for (int j = 0; j < count - i - 1; j++) {
@@ -32,6 +38,23 @@ void sortTasksByDueDate(task* tasks[], int count) {
     }
 }
 
+
+/*
+add() - Adds a new task to the linked list
+ - Steps: 1) Allocate memory 2) Get user input 3) Validate 4) Insert at head
+ - Time: O(n), Space: O(1)
+ - Example: add(&tasks) -> prompts for task details -> adds to list
+
+ Sample Case:
+ -Input: 
+    Name: "Complete Assignment"
+    Description: "Finish data structures homework"
+    Priority: 1 (High)
+    Due Date: 10 05 2025
+ -Output:
+    Task added successfully!
+    List now contains: "Complete Assignment" -> [previous tasks]
+ */
 void add(tasklist* list) {
     task* new_task = (task*)malloc(sizeof(task));
     if (!new_task) {
@@ -43,20 +66,20 @@ void add(tasklist* list) {
     new_task->tag_count = 0;  // Initialize with no tags
 
     char task_name[100];
-    bool is_valid_name = false; // Flag to control the loop
+    bool is_valid_name = false; 
 
     do {
         printf("Enter task name: ");
         if (fgets(task_name, sizeof(task_name), stdin) == NULL) {
-             // Handle potential input error (e.g., EOF)
+             // Handle potential input error 
              printf("Error reading input.\n");
              free(new_task); // Clean up allocated memory
              return;
         }
         task_name[strcspn(task_name, "\n")] = 0; // Remove trailing newline
 
-        // --- Input Validation Start ---
-        is_valid_name = true; // Assume valid initially for this iteration
+        // Input Validation : Start 
+        is_valid_name = true; 
         bool contains_only_whitespace = true;
 
         // 1. Check if the string is empty
@@ -66,8 +89,7 @@ void add(tasklist* list) {
         } else {
             // 2. Check if the string contains only whitespace
             for (int i = 0; task_name[i] != '\0'; i++) {
-                // isspace checks for space, tab, newline, etc.
-                // Cast to unsigned char for safety with ctype functions
+                // Check if the character is not whitespace
                 if (!isspace((unsigned char)task_name[i])) {
                     contains_only_whitespace = false;
                     break; // Found a non-whitespace character, no need to check further
@@ -79,7 +101,7 @@ void add(tasklist* list) {
                 is_valid_name = false;
             }
         }
-        // --- Input Validation End ---
+        // Input Validation : End 
 
         // 3. Check for duplicates only if the name format is valid
         if (is_valid_name) {
@@ -95,13 +117,12 @@ void add(tasklist* list) {
     strcpy(new_task->name, task_name);
 
     printf("Enter task description: ");
-    // Consider adding similar validation for description if needed
+  
     fgets(new_task->description, sizeof(new_task->description), stdin);
     new_task->description[strcspn(new_task->description, "\n")] = 0;
 
     printf("Enter priority (1-High, 2-Medium, 3-Low): ");
-    // Be careful with mixing fgets and scanf. Using fgets for all input is safer.
-    // Example of safer input for integer:
+    
     char buffer[20];
     int priority_input = 0;
     if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
@@ -109,13 +130,13 @@ void add(tasklist* list) {
              new_task->priority = priority_input;
         } else {
             printf("Invalid priority input. Setting to Medium (2).\n");
-            new_task->priority = 2; // Default on parse error
+            new_task->priority = 2;
         }
     } else {
         printf("Error reading priority input. Setting to Medium (2).\n");
-        new_task->priority = 2; // Default on read error
+        new_task->priority = 2; 
     }
-    // No need for getchar() here if using fgets exclusively
+   
 
     // Validate priority range
     if (new_task->priority < 1 || new_task->priority > 3) {
@@ -123,31 +144,33 @@ void add(tasklist* list) {
         new_task->priority = 2;
     }
 
+    // Get due date
     printf("Enter due date (DD MM YYYY): ");
-     // Similarly, safer to read the whole line with fgets and parse
     if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
-        if (sscanf(buffer, "%d %d %d", &new_task->duedate.day, &new_task->duedate.month, &new_task->duedate.year) == 3) {
-            new_task->due_date_set = 1;
-             // Basic date validation
-            if (new_task->duedate.day < 1 || new_task->duedate.day > 31 ||
-                new_task->duedate.month < 1 || new_task->duedate.month > 12 ||
-                new_task->duedate.year < 2000) { // Consider a more robust date check
-                printf("Warning: Date might be invalid (Day: %d, Month: %d, Year: %d). Using it anyway.\n",
-                       new_task->duedate.day, new_task->duedate.month, new_task->duedate.year);
+        int day, month, year;
+        if (sscanf(buffer, "%d %d %d", &day, &month, &year) == 3) {
+            // Validate date
+            if (isValidDate(day, month, year)) {
+                new_task->duedate.day = day;
+                new_task->duedate.month = month;
+                new_task->duedate.year = year;
+                new_task->due_date_set = 1;
+            } else {
+                printf("Invalid date (Day: %d, Month: %d, Year: %d). Due date not set.\n",
+                       day, month, year);
+                new_task->due_date_set = 0;
             }
         } else {
-             printf("Invalid date format. Due date not set.\n");
-             new_task->due_date_set = 0;
+            printf("Invalid date format. Due date not set.\n");
+            new_task->due_date_set = 0;
         }
     } else {
         printf("Error reading date input. Due date not set.\n");
         new_task->due_date_set = 0;
     }
-    // No need for getchar() here if using fgets exclusively
 
     new_task->completed = 0;
-    // Assuming 'PENDING' is defined elsewhere (e.g., an enum)
-    // new_task->status = PENDING;
+    new_task->status = PENDING;  
     new_task->next = list->head;
     list->head = new_task;
 
@@ -155,7 +178,16 @@ void add(tasklist* list) {
 }
 
 
-// Function to check if a task name already exists
+/*
+isTaskNameDuplicate() - Checks if task name already exists
+ - Time: O(n), Space: O(1)
+ - Sample Case:
+    Input: 
+      List: ["Study", "Project", "Meeting"]
+      Name to check: "Study"
+    Output: 
+      Returns 1 (duplicate found)
+ */
 int isTaskNameDuplicate(tasklist* list, const char* name) {
     task* current = list->head;
     while (current) {
@@ -167,6 +199,22 @@ int isTaskNameDuplicate(tasklist* list, const char* name) {
     return 0; // Name doesn't exist
 }
 
+
+/*
+view() - Displays tasks sorted by priority and due date
+ - Time: O(n²), Space: O(n)
+ - Sample Case:
+    Input: List with 3 tasks of different priorities
+    Output:
+      --- HIGH PRIORITY TASKS ---
+      Name: Urgent Project [!]URGENT
+      Due Date: 03/05/2025
+      -------------------------
+      --- MEDIUM PRIORITY TASKS ---
+      Name: Regular Task
+      Due Date: 10/05/2025
+      -------------------------
+ */
 void view(tasklist* list, date today) {
     task* current = list->head;
     printf("\n=== Task List ===\n");
@@ -176,7 +224,7 @@ void view(tasklist* list, date today) {
         return;
     }
     
-    // First, update statuses based on current date
+    // update statuses based on current date
     updateTaskStatuses(current, today);
 
     // Create arrays to store tasks by priority and status
@@ -189,7 +237,7 @@ void view(tasklist* list, date today) {
     
     // Organize tasks by priority and status
     while (current) {
-        // If task is overdue, add to overdue array regardless of priority
+        // If task is overdue -> add to overdue array regardless of priority
         if (!current->completed && current->status == OVERDUE) {
             overdue_tasks[overdue_count++] = current;
         } 
@@ -288,7 +336,7 @@ void view(tasklist* list, date today) {
         printf("-------------------------\n");
     }
     
-    // Display medium priority tasks
+    // medium priority tasks
     if (medium_count > 0) {
         printf("\n--- MEDIUM PRIORITY TASKS ---\n");
         printf("(Sorted by due date - earliest first)\n");
@@ -331,7 +379,7 @@ void view(tasklist* list, date today) {
         printf("-------------------------\n");
     }
     
-    // Display low priority tasks
+    // low priority tasks
     if (low_count > 0) {
         printf("\n--- LOW PRIORITY TASKS ---\n");
         printf("(Sorted by due date - earliest first)\n");
@@ -374,7 +422,7 @@ void view(tasklist* list, date today) {
         printf("-------------------------\n");
     }
     
-    // Display a summary
+    // summary
     int total_tasks = overdue_count + high_count + medium_count + low_count;
     printf("\n=== SUMMARY ===\n");
     printf("Total Active Tasks: %d\n", total_tasks);
@@ -407,13 +455,23 @@ void view(tasklist* list, date today) {
 }
 
 
-
+/*
+edit() - Modifies existing task details
+ - Time: O(n), Space: O(1)
+ - Sample Case:
+    Input:
+      Task name: "Essay"
+      Choice: 3 (Edit priority)
+      New priority: 1
+    Output:
+      Task priority updated.
+ */
 void edit(tasklist* list, const char* taskname) {
     task* current = list->head;
     while (current) {
         if (strcmp(current->name, taskname) == 0) {
             int choice;
-            char buffer[20]; // Buffer for reading numeric/choice input safely
+            char buffer[20]; 
 
             printf("Editing task: %s\n", current->name);
             printf("Choose what to edit:\n");
@@ -423,7 +481,7 @@ void edit(tasklist* list, const char* taskname) {
             printf("4. Due Date\n");
             printf("Enter your choice (1-4): ");
 
-            // Safer choice input
+            
             if (fgets(buffer, sizeof(buffer), stdin) == NULL || sscanf(buffer, "%d", &choice) != 1) {
                 printf("Invalid choice input. Aborting edit.\n");
                 return;
@@ -432,18 +490,18 @@ void edit(tasklist* list, const char* taskname) {
             switch (choice) {
                 case 1: {
                     char new_name[100];
-                    bool is_duplicate; // Renamed flag for clarity
-                    bool format_valid_and_not_same; // Flag to control loop exit and final copy
+                    bool is_duplicate; 
+                    bool format_valid_and_not_same; 
 
                     do {
                         printf("Enter new task name: ");
                         if (fgets(new_name, sizeof(new_name), stdin) == NULL) {
                             printf("Error reading input. Aborting name change.\n");
-                            return; // Or handle error differently
+                            return; 
                         }
-                        new_name[strcspn(new_name, "\n")] = 0; // Remove newline
+                        new_name[strcspn(new_name, "\n")] = 0; 
 
-                        // --- Input Validation Start ---
+                        // Input Validation : Start 
                         bool is_valid_format = true;
                         bool contains_only_whitespace = true;
 
@@ -464,40 +522,39 @@ void edit(tasklist* list, const char* taskname) {
                                 is_valid_format = false;
                             }
                         }
-                        // --- Input Validation End ---
+                        //Input Validation : End 
 
                         if (!is_valid_format) {
                              is_duplicate = true; // Force loop repeat if format is bad
                              format_valid_and_not_same = false;
-                             continue; // Skip further checks for this iteration
+                             continue; 
                         }
 
                         // 3. Check if the new name is the same as the current one
                         if (strcmp(new_name, current->name) == 0) {
                             printf("The new name is the same as the current name. No change needed.\n");
-                             // If the name is the same, we don't need to check for duplicates
-                             // or copy it. We can exit the loop and skip the copy.
-                            is_duplicate = false; // It's not a duplicate of *another* task
-                            format_valid_and_not_same = false; // Signal not to copy below
-                            break; // Exit the do-while loop
+                             
+                            is_duplicate = false; 
+                            format_valid_and_not_same = false; 
+                            break; 
                         }
 
                         // 4. Check if it duplicates *another* existing task name
                         is_duplicate = isTaskNameDuplicate(list, new_name);
                         if (is_duplicate) {
                             printf("Error: A task with this name already exists. Please choose a different name.\n");
-                            format_valid_and_not_same = false; // Ensure we loop again
+                            format_valid_and_not_same = false; 
                         } else {
-                            // Format is valid, it's different from the old name, and not a duplicate
-                            format_valid_and_not_same = true; // Name is acceptable
+                           
+                            format_valid_and_not_same = true; 
                         }
 
-                    } while (is_duplicate || !format_valid_and_not_same); // Loop if duplicate OR format was invalid/same
+                    } while (is_duplicate || !format_valid_and_not_same);
 
                     // Only copy if the loop finished with a valid, different, non-duplicate name
                     if (format_valid_and_not_same) {
                          strcpy(current->name, new_name);
-                         printf("Task name updated.\n"); // Give specific feedback
+                         printf("Task name updated.\n"); 
                     }
                     break;
                 }
@@ -589,6 +646,19 @@ void edit(tasklist* list, const char* taskname) {
 }
 
 
+/*
+complete() - Moves task from active list to completed stack
+ - Time: O(n), Space: O(1)
+ - Sample Case:
+    Input: Task name: "Submit Report"
+    Before: 
+      Active List: "Submit Report" -> "Task 2" -> NULL
+      Stack: [empty]
+    After:
+      Active List: "Task 2" -> NULL
+      Stack: "Submit Report" -> NULL
+    Output: "Task 'Submit Report' marked as completed!"
+ */
 void complete(tasklist* list, completedstack* stack, const char* taskname) {
     if (!list || !stack || !taskname) {
         printf("Error: Invalid parameters for complete function.\n");
@@ -641,6 +711,18 @@ void complete(tasklist* list, completedstack* stack, const char* taskname) {
     printf("Task '%s' marked as completed and moved to stack!\n", current->name);
 }
 
+/*
+undoCompleted() - Restores last completed task to active list
+ - Time: O(1), Space: O(1)
+ - Sample Case:
+    Before:
+      Active: ["Task A"] -> NULL
+      Stack: ["Completed Task"] -> NULL
+    After:
+      Active: ["Completed Task"] -> ["Task A"] -> NULL
+      Stack: NULL
+    Output: "Last completed task restored to the list."
+ */
 void undoCompleted(tasklist* list, completedstack* stack) {
     if (!stack->top) {
         printf("No completed tasks to undo.\n");
@@ -666,6 +748,15 @@ void undoCompleted(tasklist* list, completedstack* stack) {
     printf("Last completed task restored to the list.\n");
 }
 
+/*
+deleteTask() - Permanently removes task from list
+ - Time: O(n), Space: O(1)
+ - Sample Case:
+    Input: Task name: "Old Task"
+    Before: ["Task 1"] -> ["Old Task"] -> ["Task 3"]
+    After: ["Task 1"] -> ["Task 3"]
+    Output: "Task deleted."
+ */
 void deleteTask(tasklist* list, const char* taskname) {
     task* current = list->head, *prev = NULL;
     while (current && strcmp(current->name, taskname) != 0) {
@@ -682,6 +773,11 @@ void deleteTask(tasklist* list, const char* taskname) {
     printf("Task deleted.\n");
 }
 
+/*
+sortTasks() - Sorts tasks by priority (insertion sort)
+ - Time: O(n²), Space: O(1)
+ - Example: sortTasks(&tasks) -> rearranges list: High->Medium->Low priority
+ */
 void sortTasks(tasklist* list) {
     if (!list->head || !list->head->next) return;
     task* sorted = NULL;
@@ -704,6 +800,11 @@ void sortTasks(tasklist* list) {
     printf("Tasks sorted by priority.\n");
 }
 
+/*
+progress() - Shows completion statistics
+ - Time: O(n), Space: O(1)
+ - Example: progress(&tasks, &stack) -> "Progress: 5 completed out of 10 (50%)"
+ */
 void progress(tasklist* list, completedstack* stack) {
     int total = 0, done = 0;
     task* cur = list->head;
@@ -721,6 +822,11 @@ void progress(tasklist* list, completedstack* stack) {
            (total + done) ? (done * 100.0) / (total + done) : 0);
 }
 
+/*
+freeTasks() - Frees all memory in task list
+ - Time: O(n), Space: O(1)
+ - Example: freeTasks(&tasks) -> deallocates all task nodes
+ */
 void freeTasks(tasklist* list) {
 
     task* current = list->head;
@@ -737,24 +843,44 @@ void freeTasks(tasklist* list) {
     
     }
     
-// KEEP THIS VERSION:
+
+/*
+freeStack() - Frees all memory in completed stack
+ - Time: O(n), Space: O(1)
+ - Example: freeStack(&stack) -> deallocates all stack nodes and tasks
+ */
 void freeStack(completedstack* stack) {
     stacknode* current = stack->top;
     while (current) {
         stacknode* temp = current;
         current = current->next;
-        // Check task_data just in case, then free it
+        
         if (temp->task_data) {
-             free(temp->task_data); // Free the actual task struct memory FIRST
+             free(temp->task_data); // Free the actual task struct memory
         }
-        free(temp);            // Free the stack node SECOND
+        free(temp);            // Free the stack node 
     }
     stack->top = NULL; // Explicitly set top to NULL
 }
+
+/*
+initQueue() - Initializes empty queue
+ - Time: O(1), Space: O(1)
+ - Example: initQueue(&queue) -> front=NULL, rear=NULL
+ */
 void initQueue(taskqueue* q) {
     q->front = q->rear = NULL;
 }
 
+
+/*
+enqueue() - Adds task to queue rear
+ - Time: O(1), Space: O(1)
+ - Sample Case:
+    Input: Task to add
+    Before: Queue: [Task1] -> [Task2]
+    After: Queue: [Task1] -> [Task2] -> [NewTask]
+ */
 void enqueue(taskqueue* q, task* t) {
     queuenode* newNode = (queuenode*)malloc(sizeof(queuenode));
     if (!newNode) {
@@ -774,6 +900,14 @@ void enqueue(taskqueue* q, task* t) {
     q->rear = newNode;
 }
 
+/*
+dequeue() - Removes task from queue front
+ - Time: O(1), Space: O(1)
+ - Sample Case:
+    Before: Queue: [Task1] -> [Task2] -> [Task3]
+    After: Queue: [Task2] -> [Task3]
+    Output: Returns Task1
+ */
 task* dequeue(taskqueue* q) {
     if (q->front == NULL)
         return NULL;
@@ -790,16 +924,38 @@ task* dequeue(taskqueue* q) {
     return t;
 }
 
+/*
+isQueueEmpty() - Checks if queue is empty
+ - Time: O(1), Space: O(1)
+ - Example: isQueueEmpty(&queue) -> returns 1 if empty, 0 if not
+ */
 int isQueueEmpty(taskqueue* q) {
     return q->front == NULL;
 }
 
+
+/*
+freeQueue() - Deallocates queue memory
+ - Time: O(n), Space: O(1)
+ - Example: freeQueue(&queue) -> frees all queue nodes
+ */
 void freeQueue(taskqueue* q) {
     while (!isQueueEmpty(q)) {
         dequeue(q);
     }
 }
 
+/*
+add_tag_to_task() - Adds tag to task (max 5 tags)
+ - Time: O(n), Space: O(1)
+ - Sample Case:
+    Input:
+      Task name: "Research Paper"
+      Choice: 2 (Create new tag)
+      New tag: "urgent"
+    Output:
+      "Tag 'urgent' added to task 'Research Paper'."
+ */
 void add_tag_to_task(tasklist* list, const char* taskname) {
     task* current = list->head;
     
@@ -860,13 +1016,13 @@ void add_tag_to_task(tasklist* list, const char* taskname) {
     }
     
     // Collect all existing tags from all tasks
-    char unique_tags[100][MAX_TAG_LENGTH];  // Assuming max 100 unique tags
+    char unique_tags[100][MAX_TAG_LENGTH];  
     int tag_count = 0;
     
     task* all_tasks = list->head;
     while (all_tasks) {
         for (int i = 0; i < all_tasks->tag_count; i++) {
-            // Check if this tag is already in our unique_tags array
+           
             int is_unique = 1;
             for (int j = 0; j < tag_count; j++) {
                 if (strcmp(all_tasks->tags[i], unique_tags[j]) == 0) {
@@ -893,7 +1049,7 @@ void add_tag_to_task(tasklist* list, const char* taskname) {
         printf("\n");
     }
     
-    // Present tag options to the user
+    
     printf("\n=== Add Tag to Task '%s' ===\n", taskname);
     if (tag_count > 0) {
         printf("1. Choose from existing tags\n");
@@ -987,9 +1143,18 @@ void add_tag_to_task(tasklist* list, const char* taskname) {
     }
 }
 
+/*
+view_by_tag() - Shows all tasks with specific tag
+ - Time: O(n), Space: O(1)
+ - Example: view_by_tag(&tasks, "urgent") -> lists all tasks tagged "urgent"
+ */
 void view_by_tag(tasklist* list, const char* tag) {
     task* current = list->head;
     int found = 0;
+    
+    // Get today's date and update task statuses
+    date today = getToday();
+    updateTaskStatuses(list->head, today);
     
     printf("\n=== Tasks with Tag '%s' ===\n", tag);
     
@@ -1001,9 +1166,15 @@ void view_by_tag(tasklist* list, const char* tag) {
                 printf("Name: %s\n", current->name);
                 printf("Description: %s\n", current->description);
                 printf("Priority: %d\n", current->priority);
-                printf("Status: %s\n", 
-                       (current->status == PENDING) ? "Pending" : 
-                       (current->status == COMPLETED) ? "Completed" : "Overdue");
+                
+                // Show correct status based on updated information
+                if (current->completed) {
+                    printf("Status: Completed\n");
+                } else if (current->status == OVERDUE) {
+                    printf("Status: Overdue\n");
+                } else {
+                    printf("Status: Pending\n");
+                }
                 
                 if (current->due_date_set) {
                     printf("Due Date: %02d/%02d/%04d\n", 
@@ -1032,6 +1203,11 @@ void view_by_tag(tasklist* list, const char* tag) {
     }
 }
 
+/*
+sort_by_tag() - Lists all tags and shows tasks for selected tag
+ - Time: O(n²), Space: O(n)
+ - Example: sort_by_tag(&tasks) -> shows tag menu, then tasks for chosen tag
+ */
 void sort_by_tag(tasklist* list) {
     // First, get all unique tags from all tasks
     char unique_tags[100][MAX_TAG_LENGTH];  // Assume max 100 unique tags
@@ -1058,7 +1234,7 @@ void sort_by_tag(tasklist* list) {
         current = current->next;
     }
     
-    // Display tags and let user select one to view
+    
     if (tag_count == 0) {
         printf("No tags found in any tasks.\n");
         return;
@@ -1080,10 +1256,25 @@ void sort_by_tag(tasklist* list) {
         return;
     }
     
-    // View tasks with the selected tag
+  
     view_by_tag(list, unique_tags[selection - 1]);
 }
 
+/*
+simplified_view() - Shows compact task list with status summary
+ - Time: O(n²), Space: O(n)
+ - Sample Case:
+    Input: List with various tasks
+    Output:
+      Overdue: 1 | Urgent: 2 | Due Today: 0 | Pending: 5
+      
+      #   Name                Priority    Due Date       Status
+      --------------------------------------------------------
+      1   Overdue Assignment! High        15/04/2025     OVERDUE
+      2   Urgent Essay*       High        03/05/2025     Pending
+      
+      Legend: ! = Overdue, * = Urgent (due within 2 days)
+ */
 void simplified_view(tasklist* list, date today) {
     task* current = list->head;
     printf("\n=== Simplified Task List ===\n");
@@ -1093,7 +1284,7 @@ void simplified_view(tasklist* list, date today) {
         return;
     }
     
-    // First, update statuses based on current date
+    //  update statuses based on current date
     updateTaskStatuses(current, today);
     
     // Count tasks in each category
@@ -1126,7 +1317,7 @@ void simplified_view(tasklist* list, date today) {
            overdue, urgent, today_count, pending);
     
     // Create arrays for tasks by priority
-    task* priority_tasks[3][100]; // For priorities 1, 2, 3 (up to 100 tasks per priority)
+    task* priority_tasks[3][100]; 
     int priority_counts[3] = {0};
     
     // Collect tasks by priority
@@ -1166,14 +1357,14 @@ void simplified_view(tasklist* list, date today) {
         }
     }
     
-    // Display table header
-    printf("%-3s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Status");
-    printf("---------------------------------------------------------------\n");
+ 
+    printf("%-5s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Status");
+    printf("--------------------------------------------------------------------\n");
     
-    // Print tasks in priority order, and due date order within each priority
+
     int count = 1;
     
-    // First print overdue tasks at the top (regardless of priority)
+
     current = list->head;
     while (current) {
         if (!current->completed && current->status == OVERDUE) {
@@ -1193,18 +1384,18 @@ void simplified_view(tasklist* list, date today) {
                 default: strcpy(priority_str, "Unknown");
             }
             
-            // Add marker for overdue
+            
             char name_with_markers[30] = "";
             strncpy(name_with_markers, current->name, 25);
             strcat(name_with_markers, "!");
             
-            printf("%-3d %-25s %-10s %-15s %-10s\n", 
+            printf("%-5d %-25s %-10s %-15s %-10s\n", 
                    count++, name_with_markers, priority_str, date_str, "OVERDUE");
         }
         current = current->next;
     }
     
-    // Then print the rest of the tasks by priority and due date
+   
     for (int p = 0; p < 3; p++) {
         for (int i = 0; i < priority_counts[p]; i++) {
             task* t = priority_tasks[p][i];
@@ -1228,7 +1419,7 @@ void simplified_view(tasklist* list, date today) {
                 default: strcpy(priority_str, "Unknown");
             }
             
-            // Add markers for urgent tasks
+           
             char name_with_markers[30] = "";
             strncpy(name_with_markers, t->name, 25);
             
@@ -1236,37 +1427,44 @@ void simplified_view(tasklist* list, date today) {
                 strcat(name_with_markers, "*");
             }
             
-            printf("%-3d %-25s %-10s %-15s %-10s\n", 
+            printf("%-5d %-25s %-10s %-15s %-10s\n", 
                    count++, name_with_markers, priority_str, date_str, "Pending");
         }
     }
     
     printf("\nLegend: ! = Overdue, * = Urgent (due within 2 days)\n");
 }
-// int isDateWithinDays(date today, date check_date, int days) {
-//     // Calculate total days for both dates (very simplified calculation)
-//     int today_days = today.year * 365 + today.month * 30 + today.day;
-//     int check_days = check_date.year * 365 + check_date.month * 30 + check_date.day;
-    
-//     // Check if the date is within the specified range
-//     int diff = check_days - today_days;
-//     return (diff >= 0 && diff <= days);
-// }
 
+
+/*
+view_weekly_summary() - Shows tasks due in next 7 days
+ - Time: O(n²), Space: O(n)
+ - Sample Case:
+    Input: Current date: 02/05/2025
+    Output:
+      === Tasks Due This Week (02/05/2025 to 09/05/2025) ===
+      #   Name            Priority   Due Date    Days Left
+      1   Assignment      High       05/05/2025  3 days
+      2   Meeting Prep    Medium     07/05/2025  5 days
+      
+      Daily summary:
+      Today: 0 tasks
+      Tomorrow: 1 tasks
+ */
 void view_weekly_summary(tasklist* list, date today) {
     task* current = list->head;
     int count = 0;
     
     printf("\n=== Tasks Due This Week (%02d/%02d/%04d to %02d/%02d/%04d) ===\n", 
            today.day, today.month, today.year,
-           today.day + 7, today.month, today.year); // Simple calculation, not accounting for month/year boundaries
+           today.day + 7, today.month, today.year); 
     
-    printf("%-3s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Days Left");
+    printf("%-5s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Days Left");
     printf("---------------------------------------------------------------\n");
     
     // Create arrays to store tasks for each day of the week
-    task* days_tasks[8][50]; // [0] is for today, [1] for tomorrow, etc., allow up to 50 tasks per day
-    int days_tasks_count[8] = {0}; // Track the count of tasks for each day
+    task* days_tasks[8][50];
+    int days_tasks_count[8] = {0}; 
     
     // First pass: collect tasks in arrays by day
     while (current) {
@@ -1309,7 +1507,7 @@ void view_weekly_summary(tasklist* list, date today) {
                 sprintf(days_left, "%d days", day);
             }
             
-            printf("%-3d %-25s %-10s %-15s %-10s\n", 
+            printf("%-5d %-25s %-10s %-15s %-10s\n", 
                    task_num++, t->name, priority_str, date_str, days_left);
             count++;
         }
@@ -1321,7 +1519,7 @@ void view_weekly_summary(tasklist* list, date today) {
         printf("\nTotal: %d tasks due this week\n", count);
     }
     
-    // Daily summary MOVED to the bottom
+    
     printf("\nDaily summary:\n");
     printf("Today: %d tasks\n", days_tasks_count[0]);
     printf("Tomorrow: %d tasks\n", days_tasks_count[1]);
@@ -1331,37 +1529,13 @@ void view_weekly_summary(tasklist* list, date today) {
 }
 
 
-// void show_combined_stats(task* head, completedstack* stack, date today) {
-//     int choice;
-//     char buffer[10];
-    
-//     printf("\n=== Task Statistics View ===\n");
-//     printf("1. All-time Statistics\n");
-//     printf("2. Weekly Statistics\n");
-//     printf("3. Monthly Statistics\n");
-//     printf("Enter your choice (1-3): ");
-    
-//     if (fgets(buffer, sizeof(buffer), stdin) == NULL || sscanf(buffer, "%d", &choice) != 1) {
-//         printf("Invalid input. Showing all-time statistics by default.\n");
-//         choice = 1;
-//     }
-    
-//     switch(choice) {
-//         case 1:
-//             showStats(head, stack, today);  // Original all-time stats function
-//             break;
-//         case 2:
-//             show_time_stats(head, stack, today, 0);  // Weekly stats (0 = week)
-//             break;
-//         case 3:
-//             show_time_stats(head, stack, today, 1);  // Monthly stats (1 = month)
-//             break;
-//         default:
-//             printf("Invalid option. Showing all-time statistics.\n");
-//             showStats(head, stack, today);
-//     }
-// }
 
+
+/*
+view_time_summary() - Menu for weekly/monthly summary
+ - Time: O(n²), Space: O(n)
+ - Example: view_time_summary(&tasks, today) -> choice 1=weekly, 2=monthly
+ */
 void view_time_summary(tasklist* list, date today) {
     int choice;
     char buffer[10];
@@ -1389,6 +1563,12 @@ void view_time_summary(tasklist* list, date today) {
     }
 }
 
+
+/*
+view_combined() - Menu for standard/simplified/tag view
+ - Time: O(n²), Space: O(n)
+ - Example: view_combined(&tasks, today) -> shows menu, calls chosen view
+ */
 void view_combined(tasklist* list, date today) {
     int choice;
     char buffer[10];
@@ -1406,13 +1586,13 @@ void view_combined(tasklist* list, date today) {
     
     switch(choice) {
         case 1:
-            view(list, today);  // Original view function
+            view(list, today);  
             break;
         case 2:
             simplified_view(list, today);
             break;
         case 3:
-            sort_by_tag(list);  // This function already includes tag selection
+            sort_by_tag(list);  
             break;
         default:
             printf("Invalid option. Using standard view.\n");
@@ -1420,14 +1600,19 @@ void view_combined(tasklist* list, date today) {
     }
 }
 
+/*
+view_monthly_summary() - Shows tasks due this month
+ - Time: O(n²), Space: O(n)
+ - Example: view_monthly_summary(&tasks, today) -> lists tasks for current month
+ */
 void view_monthly_summary(tasklist* list, date today) {
     task* current = list->head;
     int count = 0;
     
-    // Calculate the end date of the month (simplified, not accounting for different month lengths)
+    
     int days_in_month;
     switch (today.month) {
-        case 2: // February
+        case 2: 
             // Simple leap year check
             if ((today.year % 4 == 0 && today.year % 100 != 0) || today.year % 400 == 0) {
                 days_in_month = 29;
@@ -1444,11 +1629,11 @@ void view_monthly_summary(tasklist* list, date today) {
     
     printf("\n=== Tasks Due This Month (%02d/%04d) ===\n", today.month, today.year);
     
-    printf("%-3s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Days Left");
+    printf("%-5s %-25s %-10s %-15s %-10s\n", "#", "Name", "Priority", "Due Date", "Days Left");
     printf("---------------------------------------------------------------\n");
     
     // Count tasks by week
-    int week_count[5] = {0}; // 5 weeks in a month (approximately)
+    int week_count[5] = {0}; // 5 weeks in a month 
     task* week_tasks[5][50]; // Up to 50 tasks per week
     int week_tasks_count[5] = {0};
     
@@ -1495,7 +1680,7 @@ void view_monthly_summary(tasklist* list, date today) {
             }
         }
         
-        // Print tasks for this week
+     
         for (int i = 0; i < week_tasks_count[week]; i++) {
             task* t = week_tasks[week][i];
             
@@ -1535,7 +1720,7 @@ void view_monthly_summary(tasklist* list, date today) {
         printf("\nTotal: %d tasks due this month\n", count);
     }
     
-    // Weekly summary MOVED to the bottom
+    
     printf("\nWeekly summary:\n");
     printf("This week (next 7 days): %d tasks\n", week_count[0]);
     printf("Next week (8-14 days): %d tasks\n", week_count[1]);
@@ -1545,110 +1730,3 @@ void view_monthly_summary(tasklist* list, date today) {
         printf("End of month (29+ days): %d tasks\n", week_count[4]);
     }
 }
-
-// void text_converter(const char* input_text, tasklist* list) {
-//     if (!input_text || strlen(input_text) == 0) {
-//         printf("Please enter the text to convert to tasks:\n");
-//         char buffer[1000];
-//         fgets(buffer, sizeof(buffer), stdin);
-//         input_text = buffer;
-//     }
-    
-//     // Make a copy of the input text to avoid modifying the original
-//     char text_copy[5000];
-//     strncpy(text_copy, input_text, sizeof(text_copy) - 1);
-//     text_copy[sizeof(text_copy) - 1] = '\0';
-    
-//     // Split text by lines
-//     char* line = strtok(text_copy, "\n");
-//     int tasks_added = 0;
-    
-//     while (line) {
-//         // Skip empty lines
-//         if (strlen(line) == 0) {
-//             line = strtok(NULL, "\n");
-//             continue;
-//         }
-        
-//         // Basic parsing: Each line becomes a task
-//         task* new_task = (task*)malloc(sizeof(task));
-//         if (!new_task) {
-//             printf("Memory allocation failed.\n");
-//             return;
-//         }
-        
-//         // Initialize tag count
-//         new_task->tag_count = 0;
-        
-//         // Extract task name (use first 80 chars or up to colon if present)
-//         char* colon = strchr(line, ':');
-//         if (colon) {
-//             int name_len = colon - line;
-//             if (name_len > 99) name_len = 99;
-//             strncpy(new_task->name, line, name_len);
-//             new_task->name[name_len] = '\0';
-            
-//             // Description is everything after the colon
-//             if (strlen(colon + 1) > 0) {
-//                 strncpy(new_task->description, colon + 1, sizeof(new_task->description) - 1);
-//                 new_task->description[sizeof(new_task->description) - 1] = '\0';
-//                 // Trim leading spaces in description
-//                 char* desc_start = new_task->description;
-//                 while (*desc_start == ' ' || *desc_start == '\t') {
-//                     desc_start++;
-//                 }
-//                 if (desc_start != new_task->description) {
-//                     memmove(new_task->description, desc_start, strlen(desc_start) + 1);
-//                 }
-//             } else {
-//                 strcpy(new_task->description, "");
-//             }
-//         } else {
-//             // No colon found, use the whole line as name
-//             strncpy(new_task->name, line, sizeof(new_task->name) - 1);
-//             new_task->name[sizeof(new_task->name) - 1] = '\0';
-//             strcpy(new_task->description, "");
-//         }
-        
-//         // Trim trailing spaces in name
-//         int len = strlen(new_task->name);
-//         while (len > 0 && (new_task->name[len-1] == ' ' || new_task->name[len-1] == '\t')) {
-//             new_task->name[--len] = '\0';
-//         }
-        
-//         // Check for duplicate task name
-//         if (isTaskNameDuplicate(list, new_task->name)) {
-//             // Append a unique identifier to the name
-//             char unique_name[100];
-//             sprintf(unique_name, "%s (%d)", new_task->name, tasks_added + 1);
-//             strcpy(new_task->name, unique_name);
-//         }
-        
-//         // Set default values
-//         new_task->priority = 2;  // Medium priority by default
-//         new_task->due_date_set = 0;  // No due date
-//         new_task->completed = 0;  // Not completed
-//         new_task->status = PENDING;  // Pending status
-        
-//         // Look for priority indicators
-//         if (strstr(line, "!") || 
-//             strstr(line, "high") || strstr(line, "HIGH") || 
-//             strstr(line, "urgent") || strstr(line, "URGENT")) {
-//             new_task->priority = 1;  // High priority
-//         } else if (strstr(line, "low") || strstr(line, "LOW") || 
-//                    strstr(line, "later") || strstr(line, "LATER")) {
-//             new_task->priority = 3;  // Low priority
-//         }
-        
-//         // Add to list
-//         new_task->next = list->head;
-//         list->head = new_task;
-//         tasks_added++;
-        
-//         // Get next line
-//         line = strtok(NULL, "\n");
-//     }
-    
-//     printf("%d tasks added from text.\n", tasks_added);
-// }
-
