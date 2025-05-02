@@ -1,12 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>  // For isspace()
+#include <ctype.h>  
 #include "fileio.h"
-#include "scheduler.h"  // For isValidDate()
+#include "scheduler.h"  
 
-// Update the exportTasksTxt function in fileio.c to export all tasks organized by priority
 
+/*
+exportTasksTxt() - Exports all tasks to formatted text file
+ - Time: O(n log n), Space: O(n)
+ - Sample Case:
+    Input: Filename: "tasks_backup.txt"
+    Output file content:
+      ===== TO-DO LIST EXPORT =====
+      Date Exported: 02/05/2025
+      
+      #   Name             Priority   Due Date    Status
+      1   Urgent Task      High       03/05/2025  Pending
+      2   Regular Task     Medium     10/05/2025  Pending
+      
+      Summary: 0 overdue, 2 pending, 0 completed
+ */
 void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
     FILE* file = fopen(filename, "w");
     if (!file) {
@@ -22,7 +36,7 @@ void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
     int high_count = 0, medium_count = 0, low_count = 0;
     int total_exported = 0;
 
-    // Write a header to the file
+   
     fprintf(file, "===== TO-DO LIST EXPORT =====\n");
     fprintf(file, "Date Exported: %02d/%02d/%04d\n\n", today.day, today.month, today.year);
 
@@ -53,7 +67,7 @@ void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
         node = node->next;
     }
     
-    // Write summary at the top (like simplified view)
+    
     fprintf(file, "SUMMARY: Overdue: %d | Pending: %d | Completed: %d\n", 
             overdue_count, pending_count, completed_count);
     fprintf(file, "PRIORITIES: High: %d | Medium: %d | Low: %d\n\n", 
@@ -119,7 +133,7 @@ void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
         }
     }
     
-    // Write table header
+   
     fprintf(file, "%-3s %-25s %-10s %-15s %-10s %-20s\n", "#", "Name", "Priority", "Due Date", "Status", "Tags");
     fprintf(file, "--------------------------------------------------------------------------------\n");
     
@@ -188,7 +202,7 @@ void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
         }
     }
     
-    // Separate section for completed tasks
+   
     fprintf(file, "\n===== COMPLETED TASKS =====\n");
     fprintf(file, "%-3s %-25s %-10s %-15s %-20s\n", "#", "Name", "Priority", "Due Date", "Tags");
     fprintf(file, "--------------------------------------------------------------------------------\n");
@@ -237,7 +251,7 @@ void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
         total_exported++;
     }
     
-    // Add a more detailed summary at the end
+   
     fprintf(file, "\n===== EXPORT SUMMARY =====\n");
     fprintf(file, "Total Tasks Exported: %d\n", total_exported);
     fprintf(file, "Pending Tasks: %d\n", pending_count);
@@ -253,7 +267,16 @@ void exportTasksTxt(task* head, completedstack* stack, const char* filename) {
            total_exported, pending_count, overdue_count, completed_count);
 }
 
-
+/*
+importTasks() - Imports tasks from CSV file
+ - Time: O(n*m), Space: O(1)
+ - Sample Case:
+    Input file content:
+      Study for Exam,Review chapters 1-5,1,20/05/2025
+      Buy Groceries,Get milk and eggs,3,10/05/2025
+    Output:
+      "2 tasks imported from tasks.txt"
+ */
 void importTasks(tasklist *list, const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
@@ -265,7 +288,7 @@ void importTasks(tasklist *list, const char* filename) {
     char desc[300];
     int priority, day, month, year;
     int imported_count = 0;
-    char line[500]; // Buffer for reading lines
+    char line[500]; 
 
     // Skip header lines if they exist
     if (fgets(line, sizeof(line), file) != NULL) {
@@ -280,14 +303,14 @@ void importTasks(tasklist *list, const char* filename) {
     }
 
     while (fgets(line, sizeof(line), file) != NULL) {
-        // Skip lines that are headers or separators
+       
         if (strstr(line, "===") != NULL || strlen(line) < 5) {
             continue;
         }
 
-        // Try to parse the line
+      
         if (sscanf(line, " %99[^,],%299[^,],%d,%d/%d/%d", name, desc, &priority, &day, &month, &year) == 6) {
-            // Trim whitespace from name and description
+            
             char* end;
             
             // Trim trailing whitespace from name
@@ -302,7 +325,7 @@ void importTasks(tasklist *list, const char* filename) {
                 memmove(name, start, strlen(start) + 1);
             }
             
-            // Same for description
+            // trim for description
             end = desc + strlen(desc) - 1;
             while (end > desc && isspace((unsigned char)*end)) end--;
             *(end + 1) = '\0';
@@ -352,7 +375,7 @@ void importTasks(tasklist *list, const char* filename) {
                 newtask->due_date_set = 0;
             }
 
-            newtask->completed = 0;        // Default to pending
+            newtask->completed = 0;       
             newtask->status = PENDING;
 
             newtask->next = list->head;
