@@ -186,7 +186,7 @@ int main() {
                 break;
             case 10: {
                 char filename[100];
-                printf("Enter filename to import (default: tasks_import.txt): ");
+                printf("Enter filename to import (default: tasks_import.txt, sample_tasks.txt): ");
                 fgets(filename, sizeof(filename), stdin);
                 filename[strcspn(filename, "\n")] = 0;
                 
