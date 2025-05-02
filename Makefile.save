@@ -1,21 +1,45 @@
+# Compiler
 CC = gcc
-CFLAGS = -Wall
-OBJS = main.o task_management.o scheduler.o searchandstat.o fileio.o
 
-main: $(OBJS)
-	$(CC) $(CFLAGS) -o main $(OBJS)
+# Compiler flags
+CFLAGS = -Wall -Wextra -g
 
-main.o: main.c task_management.h scheduler.h searchandstat.h fileio.h
+# Source files
+SRCS = main.c task_management.c searchandstat.c scheduler.c fileio.c
 
-task_management.o: task_management.c task_management.h scheduler.h searchandstat.h
+# Header files
+HDRS = task_management.h searchandstat.h scheduler.h fileio.h
 
-scheduler.o: scheduler.c scheduler.h
+# Object files
+OBJS = $(SRCS:.c=.o)
 
-searchandstat.o: searchandstat.c searchandstat.h
+# Executable name
+TARGET = todolist
 
-fileio.o: fileio.c fileio.h
+# Default target
+all: $(TARGET)
 
+# Build the executable
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+
+# Compile source files
+%.o: %.c $(HDRS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean build files
 clean:
-	rm -f *.o main
+	rm -f $(OBJS) $(TARGET)
 
+# Run the program
+run: $(TARGET)
+	./$(TARGET)
 
+# Create a distribution package
+dist: clean
+	mkdir -p todolist-dist
+	cp $(SRCS) $(HDRS) Makefile README.md todolist-dist/
+	tar -czf todolist.tar.gz todolist-dist
+	rm -rf todolist-dist
+
+.PHONY: all clean run dist
