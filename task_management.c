@@ -859,24 +859,132 @@ void add_tag_to_task(tasklist* list, const char* taskname) {
         return;
     }
     
-    // Get tag from user
-    printf("Enter tag for '%s' (max %d chars): ", taskname, MAX_TAG_LENGTH - 1);
-    char new_tag[MAX_TAG_LENGTH];
-    fgets(new_tag, sizeof(new_tag), stdin);
-    new_tag[strcspn(new_tag, "\n")] = 0;
+    // Collect all existing tags from all tasks
+    char unique_tags[100][MAX_TAG_LENGTH];  // Assuming max 100 unique tags
+    int tag_count = 0;
     
-    // Check if tag already exists for this task
-    for (int i = 0; i < current->tag_count; i++) {
-        if (strcmp(current->tags[i], new_tag) == 0) {
-            printf("This task already has the tag '%s'.\n", new_tag);
-            return;
+    task* all_tasks = list->head;
+    while (all_tasks) {
+        for (int i = 0; i < all_tasks->tag_count; i++) {
+            // Check if this tag is already in our unique_tags array
+            int is_unique = 1;
+            for (int j = 0; j < tag_count; j++) {
+                if (strcmp(all_tasks->tags[i], unique_tags[j]) == 0) {
+                    is_unique = 0;
+                    break;
+                }
+            }
+            
+            // If it's a new tag, add it to our array
+            if (is_unique) {
+                strcpy(unique_tags[tag_count], all_tasks->tags[i]);
+                tag_count++;
+            }
         }
+        all_tasks = all_tasks->next;
     }
     
-    // Add tag to task
-    strcpy(current->tags[current->tag_count], new_tag);
-    current->tag_count++;
-    printf("Tag '%s' added to task '%s'.\n", new_tag, taskname);
+    // Show current tags on the task
+    if (current->tag_count > 0) {
+        printf("\nCurrent tags on this task: ");
+        for (int i = 0; i < current->tag_count; i++) {
+            printf("%s%s", current->tags[i], (i < current->tag_count - 1) ? ", " : "");
+        }
+        printf("\n");
+    }
+    
+    // Present tag options to the user
+    printf("\n=== Add Tag to Task '%s' ===\n", taskname);
+    if (tag_count > 0) {
+        printf("1. Choose from existing tags\n");
+        printf("2. Create a new tag\n");
+        printf("Enter your choice (1-2): ");
+        
+        int choice;
+        char buffer[10];
+        fgets(buffer, sizeof(buffer), stdin);
+        sscanf(buffer, "%d", &choice);
+        
+        if (choice == 1) {
+            // Show existing tags
+            printf("\n=== Available Tags ===\n");
+            for (int i = 0; i < tag_count; i++) {
+                printf("%d. %s\n", i + 1, unique_tags[i]);
+            }
+            
+            printf("Select a tag (1-%d): ", tag_count);
+            int tag_selection;
+            fgets(buffer, sizeof(buffer), stdin);
+            sscanf(buffer, "%d", &tag_selection);
+            
+            if (tag_selection < 1 || tag_selection > tag_count) {
+                printf("Invalid selection. No tag added.\n");
+                return;
+            }
+            
+            // Check if the selected tag already exists on this task
+            char* selected_tag = unique_tags[tag_selection - 1];
+            for (int i = 0; i < current->tag_count; i++) {
+                if (strcmp(current->tags[i], selected_tag) == 0) {
+                    printf("This task already has the tag '%s'.\n", selected_tag);
+                    return;
+                }
+            }
+            
+            // Add the selected tag to the task
+            strcpy(current->tags[current->tag_count], selected_tag);
+            current->tag_count++;
+            printf("Tag '%s' added to task '%s'.\n", selected_tag, taskname);
+        }
+        else if (choice == 2) {
+            // Create new tag
+            printf("Enter new tag (max %d chars): ", MAX_TAG_LENGTH - 1);
+            char new_tag[MAX_TAG_LENGTH];
+            fgets(new_tag, sizeof(new_tag), stdin);
+            new_tag[strcspn(new_tag, "\n")] = 0;
+            
+            // Validate tag name
+            if (strlen(new_tag) == 0) {
+                printf("Tag name cannot be empty.\n");
+                return;
+            }
+            
+            // Check if this tag already exists on this task
+            for (int i = 0; i < current->tag_count; i++) {
+                if (strcmp(current->tags[i], new_tag) == 0) {
+                    printf("This task already has the tag '%s'.\n", new_tag);
+                    return;
+                }
+            }
+            
+            // Add tag to task
+            strcpy(current->tags[current->tag_count], new_tag);
+            current->tag_count++;
+            printf("Tag '%s' added to task '%s'.\n", new_tag, taskname);
+        }
+        else {
+            printf("Invalid choice. No tag added.\n");
+        }
+    }
+    else {
+        // No existing tags, prompt for new tag
+        printf("No existing tags found in the system.\n");
+        printf("Enter new tag (max %d chars): ", MAX_TAG_LENGTH - 1);
+        char new_tag[MAX_TAG_LENGTH];
+        fgets(new_tag, sizeof(new_tag), stdin);
+        new_tag[strcspn(new_tag, "\n")] = 0;
+        
+        // Validate tag name
+        if (strlen(new_tag) == 0) {
+            printf("Tag name cannot be empty.\n");
+            return;
+        }
+        
+        // Add tag to task
+        strcpy(current->tags[current->tag_count], new_tag);
+        current->tag_count++;
+        printf("Tag '%s' added to task '%s'.\n", new_tag, taskname);
+    }
 }
 
 void view_by_tag(tasklist* list, const char* tag) {
