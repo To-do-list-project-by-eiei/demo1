@@ -17,7 +17,7 @@ Visit the Final Repository for the clean, optimized version with a full feature 
 
 link : [ToDoList-final Repository](https://github.com/To-do-list-project-by-eiei/ToDoList-final)
 
-or visited the full github site :
+or visited the full github site : [To-do-list-project-by-eiei Organization](https://github.com/To-do-list-project-by-eiei)
 
 ---
 
