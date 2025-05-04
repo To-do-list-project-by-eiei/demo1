@@ -1,142 +1,90 @@
-# 📝 To-Do List Application (Data Structures Project)
+# To-Do List Application (Development Progress Repository)
 
-This project is a terminal-based To-Do List application written in **C**, created for the **iCPE112 Data Structures** course.  
-It helps users manage tasks with scheduling, reminders, priority adjustment, and statistics using key data structures.
-
----
-
-## 📚 Introduction
-
-In daily life, tasks often vary in priority and urgency. Traditional to-do lists fail to address:
-- Deadlines approaching
-- Reordering priorities dynamically
-- Tracking completed tasks
-
-This project solves those problems by:
-- Using a **priority queue** to manage urgent tasks
-- Applying a **stack** to track completed items with undo support
-- Using **linked lists** to allow dynamic task insertion/removal
-- Including **date handling** and reminder logic to notify the user
-
----
-## 📌 Overview
-
-Managing tasks with different levels of urgency is a common challenge.  
-This To-Do List application enables:
-- Task creation with due dates and priority levels
-- Automatic sorting and reminders
-- Undo functionality for task completion
-- Task statistics and daily tracking
-
-It’s designed to improve productivity, reduce stress, and provide an organized workflow in a **command-line interface**.
+This repository captures the **full development history** of the To-Do List Application for the **CPE112 Data Structures** course.  
+It includes initial prototypes, testing files, code experiments, and feature evolution throughout the semester.
 
 ---
 
-## 🚀 Features
+Notes
+	•	This repository is intentionally messier than the final one. It includes failed approaches, debug versions, and backups for reference.
+	•	Some functions or files may be partially implemented or deprecated — they are kept for historical value.
 
-- ✅ Add, Edit, and Delete Tasks
-- ✅ Assign Due Dates and Get Reminders
-- ✅ Mark Tasks as Completed (Undo Available)
-- ✅ Automatic Priority Adjustment Near Deadlines
-- ✅ Simulate Day Changes (Test Time-Based Features)
-- ✅ Sort and Filter by Priority, Due Date, Status
-- ✅ Task Completion Stats and Daily Logs
-- ✅ Export and Backup Support
+---
+### Final Projec
+
+Visit the Final Repository for the clean, optimized version with a full feature list.
+
+link : 
 
 ---
 
-## 🧠 Data Structures Used
+## Purpose
 
-| Structure | Purpose |
-|-----------|---------|
-| **Linked List** | Store tasks dynamically |
-| **Stack** | Track completed tasks (Undo / Clear Stack) |
-| **Priority Queue** | Sort tasks by urgency |
-| **Sorting Algorithm (Bubble Sort)** | For organizing tasks by date and priority|
-## Data Structures and Algorithms Used
-
-
+While the final version of this project is hosted in a separate repository, **this progress repository** serves to:
+- Track all stages of design and implementation
+- Document the trial-and-error learning process
+- Preserve backup versions of core modules
+- Reflect on growth in C programming and data structure application
 
 ---
 
+## Key Development Phases
 
-## 📁 File Structure
+### Phase 1: Initial Setup
+- Basic terminal input/output  
+- Struct definition for `Task`  
+- Initial task creation with static arrays
 
-```bash
-📁 ToDoList-DSA/
-├── main.c               # Entry point of the program
-├── scheduler.h          # Scheduling, reminders, due dates, priority logic
-├── task_management.h        # Add/edit/delete/complete task functions
-├── searchstat.h        # Search functionality and statistics tracking
-├── README.md            # Project documentation
-```
+### Phase 2: Linked List Integration
+- Dynamic task storage using singly linked list  
+- Functions: add, edit, delete, display  
+
+### Phase 3: Stack & Undo Mechanism
+- Stack implementation for completed task tracking  
+- Undo functionality using stack pop  
+
+### Phase 4: Scheduler & Automation
+- Due date comparison and overdue detection  
+- Automatic task status updates  
+- Day simulation for deadline testing
+
+### Phase 5: File I/O
+- Import/export tasks from `.txt` files  
+- Backup and recovery logic  
+
+### Phase 6: Search, Tags, and Filters
+- Search by keyword, priority, tag, and status  
+- Filter tasks by due date range or missing due dates
+
+### Phase 7: Statistics & Views
+- Task completion stats  
+- Weekly/monthly summaries  
+- Enhanced display modes for better readability
+
 ---
 
-
-
-## 💻 How to Run the Code
-
-### 🧾 Requirements
-- A C compiler (`gcc`)
-- All header files (`scheduler.h`, `task_management.h`, `searchstats.h`) and `main.c` in the same folder
-
-### ⚙️ Compilation
-
-first
+## Directory Structure
 ```bash
-gcc -o todolist main.c task_management.c searchandstat.c scheduler.c fileio.c
-```
-then 
-```bash
-./todolist
-```
-the file should run properly
-
----
-
-###  Sample input
-
-1.
-```bash
-CompProg, Linked List practice - Practice linked list operations for homework, 1, 30/04/2025
-```
-2.
-```bash
-CalII, Integration review - Study integration techniques for upcoming exam, 1, 02/05/2025
-```
-more sample input on the file sample_import.txt
-
-## expected output
-```bash
-Name: CompProg [!]URGENT
-Description:  Debugging session - Fix errors in C program homework
-Status: Pending
-Due Date: 30/04/2025
-```
-```bash
-Name: CalII
-Description:  Integration review - Study integration techniques for upcoming exam
-Status: Pending
-Due Date: 02/05/2025
+/backup1/
+│
+├── fileio.c / .h              # File read/write operations
+├── task_management.c / .h     # Core task logic (add/edit/delete)
+├── scheduler.c / .h           # Deadline checks and day simulation
+├── searchandstat.c / .h       # Search, filters, and statistics
+├── main.c                     # Main menu and user interface
+├── sample_tasks.txt           # Example input file
+├── [old versions]/            # Experimental or backup files
 ```
 
-
-## 👨‍👩‍👧‍👦 Group Members
-
-| Name                        | Student ID    | Role / Responsibilities                    |
-|-----------------------------|---------------|---------------------------------------------|
-| **Kulchaya Paipinij**       | 67070503406   | Search, Data Handling & Statistics (`searchstat.h`) |
-| **Chayanit Kuntanarumitkul** | 67070503408   | Scheduling, Reminders & Automation (`scheduler.h`) |
-| **Siripitch Chaiyabutra**   | 67070503440   | Task Management & Organization (`task_management.h`) |
-
-> Each member was responsible for both development and documentation in their assigned areas.
-
 ---
 
-## 🌟 Acknowledgments
+## How to Compile & Run
 
-Special thanks to our professor and TAs for guiding us through the concepts of data structures, which helped us turn theory into a working, real-world project.
-
-
-
+```bash
+gcc main.c task_management.c scheduler.c searchandstat.c fileio.c -o todo_progress
+```
+then
+```bash
+./todo_progress
+```
 
