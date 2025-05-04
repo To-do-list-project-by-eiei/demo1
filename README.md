@@ -6,15 +6,18 @@ It includes initial prototypes, testing files, code experiments, and feature evo
 ---
 
 Notes
+
 	•	This repository is intentionally messier than the final one. It includes failed approaches, debug versions, and backups for reference.
 	•	Some functions or files may be partially implemented or deprecated — they are kept for historical value.
 
 ---
-### Final Projec
+### Final Project
 
 Visit the Final Repository for the clean, optimized version with a full feature list.
 
-link : 
+link : [ToDoList-final Repository](https://github.com/To-do-list-project-by-eiei/ToDoList-final)
+
+or visited the full github site :
 
 ---
 
@@ -87,4 +90,13 @@ then
 ```bash
 ./todo_progress
 ```
+then the file should run properly
 
+---
+## members
+1. Kulchaya Paipinij 67070503406
+2. Chayanit Kuntanarumitkul 67070503408
+3. Siripitch Chaiyabutra 67070503440
+
+Course : CPE112 - Data Structures
+Semester : 2/2024
